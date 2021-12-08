@@ -1,0 +1,29 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "spfx-ecb-extension-client-side-solution",
+    "id": "f22b6692-ca90-406f-870c-fe5bc4f9c3a0",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+  
+    "features": [
+      {
+        "title": "Custom ECB Menu Item.",
+        "description": "Deploys a custom ECB menu item sample extension",
+        "id": "5dca0665-d52f-4d33-8be2-f894e88cc55f",
+        "version": "1.0.0.0",
+        "assets": {
+          "elementManifests": [
+            "elements.xml",
+            "ClientSideInstance.xml"
+          ]
+        }
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/spfx-ecb-extension.sppkg"
+  }
+}

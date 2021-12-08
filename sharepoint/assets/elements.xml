@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Elements xmlns="http://schemas.microsoft.com/sharepoint/">
+    <CustomAction
+        Title="CustomEcb"
+        RegistrationId="119"
+        RegistrationType="List"
+        Location="ClientSideExtension.ListViewCommandSet.ContextMenu"
+        ClientSideComponentId="fb8c8a4d-517a-432a-b301-ccc4183507c9"
+         ClientSideComponentProperties="{&quot;targetUrl&quot;:&quot;Home.aspx&quot;}">
+    </CustomAction>
+</Elements>

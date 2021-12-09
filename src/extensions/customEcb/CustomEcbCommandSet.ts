@@ -1,5 +1,5 @@
 import { override } from '@microsoft/decorators';
-import { Log, Guid } from '@microsoft/sp-core-library';
+import { Log, Guid, UrlQueryParameterCollection } from '@microsoft/sp-core-library';
 import {
     BaseListViewCommandSet,
     Command,
@@ -24,13 +24,14 @@ import "@pnp/sp/webs";
 import "@pnp/sp/navigation";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
-import { ColumnControl, ClientsideText, ClientsideWebpart, IClientsidePage, CreateClientsidePage } from "@pnp/sp/clientside-pages";
+import { ColumnControl, ClientsideText, ClientsideWebpart, IClientsidePage, ClientsidePageFromFile } from "@pnp/sp/clientside-pages";
 import { ITranslationResult } from "../../models/ITranslationResult";
 import { Navigation } from "@pnp/sp/navigation";
 
 import { ITranslationService } from "../../services/ITranslationService";
 import { TranslationService } from "../../services/TranslationService";
 import { environment } from '../../environments/environment';
+
 /**
  * If your command set uses the ClientSideComponentProperties JSON input,
  * it will be deserialized into the BaseExtension.properties object.
@@ -44,13 +45,11 @@ const LOG_SOURCE: string = 'CustomEcbCommandSet';
 
 export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomEcbCommandSetProperties> {
 
+    private _pageName: string | undefined;
+
     @override
     public onInit(): Promise<void> {
         Log.info(LOG_SOURCE, 'Initialized CustomEcbCommandSet');
-
-        sp.setup(this.context);
-
-
         return Promise.resolve();
     }
 
@@ -58,12 +57,10 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     public onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): void {
         const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
         if (compareOneCommand) {
-            if (event.selectedRows.length == 1) {
-                //let pagename = event.selectedRows[0].getValueByName('FileLeafRef');
-                //Dialog.alert(pagename);
-
-                    // This command should be hidden unless exactly one row is selected.
-                    compareOneCommand.visible = event.selectedRows.length === 1;
+            if (event.selectedRows.length === 1) {
+                
+                // This command should be hidden unless exactly one row is selected.
+                compareOneCommand.visible = event.selectedRows.length === 1;
             }
         }
     }
@@ -72,14 +69,14 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     public onExecute(event: IListViewCommandSetExecuteEventParameters): void {
         switch (event.itemId) {
             case 'ShowDetails':
+                this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
                 if (confirm('Are you sure you want to translate this page')) {
                     this._onTranslate('de');
                 }
                 else {
                     console.log("No translation");
                 }
-                //siteUrl: this.context.pageContext.web.absoluteUrl;
-                //Dialog.alert(`Done`);
+
                 break;
             default:
                 throw new Error('Unknown command');
@@ -90,130 +87,147 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
     private _onTranslate = (languagecode: string): void => {
 
-        console.log('start');
-       
-        
-        const relativePageUrl: string = '/SitePages/Home.aspx';
+        console.log('_onTranslate');
 
-        //sp.web.loadClientsidePage(relativePageUrl).then(async (homePage: IClientsidePage) => {
-        //    try {
-        //        console.log(`Page 2 creating`);
-        //        //let targetpage2 = await sp.web.loadClientsidePage('/SitePages/de/Home.aspx');
-        //        //homePage.copyTo(targetpage2, true);
+        //var siteUrl = this.context.pageContext.web.serverRelativeUrl;
 
-               
+        // var sourcePageUrl = siteUrl + "/SitePages/" + selectedPage;
+        // var sourcePageUrl = siteUrl + "/SitePages/Home.aspx";
+        //sourcePageUrl = 'https://8p5g5n.sharepoint.com/SitePages/Home.aspx';
+        //console.log(sourcePageUrl);
 
-               
-        //        console.log(`Page 2 created` + homePage.sections.length);
+        //var targetPageUrl = 'https://8p5g5n.sharepoint.com/SitePages/de/Home.aspx';
 
-        //    } catch (error) {
-        //        console.dir(error);
-        //        Dialog.alert((error as Error).message);
-        //    }
-        //}).catch((error: Error) => {
-        //    console.dir(error);
-        //    Dialog.alert((error as Error).message);
-        //});
+        //TODO we should use this._pageName
+        //const sourceRelativePageUrl: string = '/SitePages/Home.aspx';
+        //const targetRelativePageUrl: string = '/SitePages/de/Home.aspx';
 
-        Dialog.alert(`Starting Translation........`);
+        const sourceRelativePageUrl: string = '/SitePages/' + this._pageName;
+        const targetRelativePageUrl: string = '/SitePages/' + languagecode + '/' + this._pageName;
 
-        //sp.web.loadClientsidePage(relativePageUrl).then(async (page: IClientsidePage) => {
+        (async () => {
 
-        //    try {
-        //        //const pageCopy2 = await page.copy(sp.web, "/SitePages/de/Home.aspx", "De Page", true);
-        //       // pageCopy2.save();
-               
-        //        console.log("page 2 created");
-
-        //    } catch (error) {
-        //        console.dir(error);
-        //        Dialog.alert((error as Error).message);
-        //    }
-        //}).catch((error: Error) => {
-        //    console.dir(error);
-        //    Dialog.alert((error as Error).message);
-        //});
-
-        const deRelativePageUrl: string = '/SitePages/de/Home.aspx';
-
-        sp.web.loadClientsidePage(deRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
-
+            Dialog.alert(this._pageName);
             try {
-                console.log('translation started');
-                // Translate title
-                // await this._translatePageTitle(clientSidePage.title, language.code);
-                //  await this._translatePageNav(sp.web.navigation.topNavigationBar.toString, language.code);
+                console.log('Copying......... ');
+                //const result = await sp.web.loadClientsidePage(deRelativePageUrl);
+                const sourcepage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(sourceRelativePageUrl));
+                const targetpage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(targetRelativePageUrl));
+                //console.log('async/await source -> ', sourcepage);
+                //console.log('async/await target -> ', targetpage);
+                sourcepage.copyTo(targetpage, true);
 
-                // Get all text controls
-                var clientControls: ColumnControl<any>[] = [];
-                clientSidePage.findControl((c) => {
-                    if (c instanceof ClientsideText) {
-                        //clientControls.push(c);
-                        const translatedText = this._getTranslatedText(c.text, languagecode);
-                        c.text = c.text + translatedText;
-                       
+                console.log('Copy Completed.......');
+
+                Dialog.alert(`Copy Completed.......Starting Translation.`);
+
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                //const deRelativePageUrl: string = '/SitePages/de/Home.aspx';
+
+                sp.web.loadClientsidePage(targetRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
+
+                    try {
+                        console.log('translation started');
+                        // Translate title
+
+                        //clientSidePage.copy(sp.web, "home_page_de", "Home Page", true);
+
+                        clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
+
+                        clientSidePage.findControl((c) => {
+                            if (c instanceof ClientsideText) {
+                                //Dialog.alert(c.text);
+                                //const translatedText = this._getTranslatedText(c.text, languagecode,true);
+                                //c.text = c.text + translatedText;
+                            }
+                            else if (c instanceof ClientsideWebpart) {
+
+                                //const spt = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts;
+                                //let spt: cTypedHash<string> = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts;
+                                if (c.data.webPartData?.serverProcessedContent?.searchablePlainTexts) {
+                                    let propkeys = Object.keys(c.data.webPartData?.serverProcessedContent?.searchablePlainTexts);
+                                    //console.log("wait...");
+                                    //console.log(keys.length + "    " + keys);
+                                    propkeys.forEach(key => {
+                                        const propvalue = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts[key];
+                                        const translatedText = this._getTranslatedText(propvalue, languagecode, false);
+                                        c.data.webPartData.serverProcessedContent.searchablePlainTexts[key] = propvalue + translatedText;
+                                        //console.log(spt[key])
+                                    });
+                                }
+                            }
+                            return false;
+                        });
+
+                        //const nav = sp.web.navigation.topNavigationBar;
+                        //Dialog.alert(nav.length.toString());
+                        //const childrenData = await nav.getById(1).children();
+                        //await nav.getById(1).update({
+                        //    Title: "A new title",
+                        //});
+
+
+
+                        console.log('translation complete');
+
+                        clientSidePage.save();
+
+                        Dialog.alert(`Translation Completed........`);
+
+                    } catch (error) {
+                        console.dir(error);
+
                     }
-                    else if (c instanceof ClientsideWebpart) {
-                        //clientControls.push(c);
-                        //const spt = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts;
-                        let spt: cTypedHash<string> = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts;
-                        if (c.data.webPartData?.serverProcessedContent?.searchablePlainTexts!=null ) {
-                            let propkeys = Object.keys(c.data.webPartData?.serverProcessedContent?.searchablePlainTexts);
-                            //console.log("wait...");
-                            //console.log(keys.length + "    " + keys);
-                            propkeys.forEach(key => {
-                                const propvalue = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts[key];
-                                const translatedText = this._getTranslatedText(propvalue, languagecode);
-                                //c.data.webPartData.serverProcessedContent.searchablePlainTexts[key] = propvalue + translatedText;
-                                //console.log(spt[key])
-                            });
-                        }
-                    }
-                    return false;
+                }).catch((error: Error) => {
+                    console.dir(error);
+
                 });
 
-                //await this._alltranslateClientSideControl(clientControls, language.code);
 
-                console.log('translation complete');
-              
-                clientSidePage.save();
-
-                Dialog.alert(`Translation Completed........`);
-
-            } catch (error) {
-                console.dir(error);
-                Dialog.alert((error as Error).message);
+            } catch (err) {
+                console.dir('aynsc error');
+                console.log(err);
             }
-        }).catch((error: Error) => {
-            console.dir(error);
-            Dialog.alert((error as Error).message);
-        });
+        })();
 
 
     }
 
 
 
-    private _getTranslatedText = (text:string,languagecode: string): string => {
+    private _getTranslatedText = (text: string, languagecode: string, asHtml: boolean): string => {
 
-        console.log('start');
-        let translatedText:string = "noValue";
 
-        const translationService: ITranslationService = environment.config.regionSpecifier
-            ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
-            : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
+        let translatedText: string = "";
+        if (text) {
+            // console.log('start');
+            const translationService: ITranslationService = environment.config.regionSpecifier
+                ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
+                : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
 
-        //translationService.translate(text, languagecode, false).then(translationResult =>
-        //    translatedText=translationResult.translations[0].text
-        //);
+            //TODO : uncomment the below code 
+            //translationService.translate(text, languagecode, false).then(translationResult =>
+            //    translatedText=translationResult.translations[0].text
+            //);
 
-        translatedText = "_de";
+            //TODO remove below code.
+            translatedText = "_ed";
+            // console.log('end');
+        }
 
-        console.log('end');
         return translatedText;
     }
 
+    //private _translatePageNav = async (navigation, languageCode): Promise<void> => {
+    //    const translationResult: string = await this._getTranslatedText(navigation, languageCode);
 
+    //    // get the title element
+    //    //const nav: Element = document.querySelector("div[data-automation-id='pageHeader'] div[role='heading']");
+    //    //if (nav) {
+    //    //    nav.textContent = translationResult;
+    //    //}
+    //}
 
 }
 

@@ -59,13 +59,19 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
         //checking for multilingual feature on site
         const langFeature: boolean = await this.getMultiLingualFeatureEnabled();
+        //check if page is only the main page and nothing other then aspx page
+        const validPage = (pageName): boolean => {
+            return pageName.slice(10, pageName.lastIndexOf('/')).length === 0 && pageName.indexOf('.aspx') !== -1 ?  true :  false;
+        }
+        
         if (compareOneCommand) {
             if (event.selectedRows.length == 1) {
                 //let pagename = event.selectedRows[0].getValueByName('FileLeafRef');
                 //Dialog.alert(pagename);
 
                     // This command should be hidden unless exactly one row is selected.
-                    compareOneCommand.visible = event.selectedRows.length === 1 && langFeature ;
+                    const pageName: string = event.selectedRows[0].getValueByName("FileRef");
+                    compareOneCommand.visible = event.selectedRows.length === 1 && langFeature && validPage(pageName); ;
             }
         }
     }

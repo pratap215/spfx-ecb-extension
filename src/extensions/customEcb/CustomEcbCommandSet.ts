@@ -56,13 +56,9 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
     @override
     public async onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): Promise<void> {
-
-        console.log('====================================');
-        console.log('onListViewUpdated');
-        console.log('====================================');
         const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
+        //checking for multilingual feature on site
         const langFeature: boolean = await this.getMultiLingualFeatureEnabled();
-        console.log(langFeature);
         if (compareOneCommand) {
             if (event.selectedRows.length == 1) {
                 //let pagename = event.selectedRows[0].getValueByName('FileLeafRef');
@@ -229,16 +225,10 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         
         return translatedText;
     }
-
+    //*************Function to get Multilingual Feature Enabled************************************* */
     public getMultiLingualFeatureEnabled = () : Promise<boolean> => {
         return new Promise<boolean>(async (resolve, reject) => {
             let features = await sp.web.features.select("DisplayName", "DefinitionId").get().then(f => {
-                // console.log('====================================');
-                // f.map(f => {
-                //     console.log(f["DisplayName"] + " - " + f.DefinitionId);
-                // });
-                // console.log(f);
-                // console.log('====================================');
                 if(_.find(f, { "DisplayName": "MultilingualPages" })){
                     return resolve(true);
                 }

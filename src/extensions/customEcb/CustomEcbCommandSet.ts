@@ -81,18 +81,13 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         switch (event.itemId) {
             case 'ShowDetails':
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
-                if (confirm('Are you sure you want to translate this page')) {
-                    this._onTranslate('de');
-                }
-                else {
-                    console.log("No translation");
-                }
-
+                this._onTranslate('de');
                 break;
             default:
                 throw new Error('Unknown command');
         }
     }
+
 
 
 
@@ -112,125 +107,150 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         //TODO we should use this._pageName
         //const sourceRelativePageUrl: string = '/SitePages/Home.aspx';
         //const targetRelativePageUrl: string = '/SitePages/de/Home.aspx';
-
-        const sourceRelativePageUrl: string = '/SitePages/' + this._pageName;
         const targetRelativePageUrl: string = '/SitePages/' + languagecode + '/' + this._pageName;
 
         (async () => {
 
-            Dialog.alert(this._pageName);
+            //Dialog.alert(this._pageName);
             try {
                 console.log('Copying......... ');
                 //const result = await sp.web.loadClientsidePage(deRelativePageUrl);
-                const sourcepage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(sourceRelativePageUrl));
-                const targetpage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(targetRelativePageUrl));
-                //console.log('async/await source -> ', sourcepage);
-                //console.log('async/await target -> ', targetpage);
-                sourcepage.copyTo(targetpage, true);
-
-                console.log('Copy Completed.......');
-
-                Dialog.alert(`Copy Completed.......Starting Translation.`);
-
-                await new Promise(resolve => setTimeout(resolve, 2000));
-
-                //const deRelativePageUrl: string = '/SitePages/de/Home.aspx';
-
-                sp.web.loadClientsidePage(targetRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
-
-                    try {
-                        console.log('translation started');
-                        // Translate title
-
-                        //clientSidePage.copy(sp.web, "home_page_de", "Home Page", true);
-
-                        clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
-
-                        clientSidePage.findControl((c) => {
-                            if (c instanceof ClientsideText) {
-                                //Dialog.alert(c.text);
-                                //const translatedText = this._getTranslatedText(c.text, languagecode,true);
-                                //c.text = c.text + translatedText;
-                            }
-                            else if (c instanceof ClientsideWebpart) {
-
-                                //const spt = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts;
-                                //let spt: cTypedHash<string> = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts;
-                                if (c.data.webPartData?.serverProcessedContent?.searchablePlainTexts) {
-                                    let propkeys = Object.keys(c.data.webPartData?.serverProcessedContent?.searchablePlainTexts);
-                                    //console.log("wait...");
-                                    //console.log(keys.length + "    " + keys);
-                                    propkeys.forEach(key => {
-                                        const propvalue = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts[key];
-                                        const translatedText = this._getTranslatedText(propvalue, languagecode, false);
-                                        c.data.webPartData.serverProcessedContent.searchablePlainTexts[key] = propvalue + translatedText;
-                                        //console.log(spt[key])
-                                    });
-                                }
-                            }
-                            return false;
-                        });
-
-                        //const nav = sp.web.navigation.topNavigationBar;
-                        //Dialog.alert(nav.length.toString());
-                        //const childrenData = await nav.getById(1).children();
-                        //await nav.getById(1).update({
-                        //    Title: "A new title",
-                        //});
-
-
-
-                        console.log('translation complete');
-
-                        clientSidePage.save();
-
-                        Dialog.alert(`Translation Completed........`);
-
-                    } catch (error) {
-                        console.dir(error);
-
-                    }
-                }).catch((error: Error) => {
+                let targetpage: IClientsidePage = undefined;
+                try {
+                    targetpage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(targetRelativePageUrl));
+                } catch (error) {
                     console.dir(error);
+                    console.log('target page not found');
+                    Dialog.alert('Language page not found,Please contact admin....');
 
-                });
+                }
+                //console.log('async/await source -> ', sourcepage);
 
+                if (targetpage != undefined) {
+                    const sourceRelativePageUrl: string = '/SitePages/' + this._pageName;
+                    const sourcepage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(sourceRelativePageUrl));
+                    console.log('async/await target -> ', targetpage);
+                    await sourcepage.copyTo(targetpage, true);
+
+                    console.log('Copy Completed.......');
+
+                    if (confirm('Are you sure you want to translate this page')) {
+
+                        const translationService: ITranslationService = environment.config.regionSpecifier
+                            ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
+                            : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
+
+                        Dialog.alert(`Copy Completed.......Starting Translation.`);
+
+                        await new Promise(resolve => setTimeout(resolve, 6000));
+
+                        sp.web.loadClientsidePage(targetRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
+
+                            try {
+                                console.log('translation started');
+
+                                //clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
+
+
+                                var clientControls: ColumnControl<any>[] = [];
+                                clientSidePage.findControl((c) => {
+                                    if (c instanceof ClientsideText) {
+                                        clientControls.push(c);
+                                    }
+                                    else if (c instanceof ClientsideWebpart) {
+                                        clientControls.push(c);
+                                    }
+                                    return false;
+                                });
+
+                                //const nav = sp.web.navigation.topNavigationBar;
+                                //Dialog.alert(nav.length.toString());
+                                //const childrenData = await nav.getById(1).children();
+                                //await nav.getById(1).update({
+                                //    Title: "A new title",
+                                //});
+
+                                await this._alltranslateClientSideControl(translationService, clientControls, languagecode);
+
+                                console.log('translation complete');
+
+                                clientSidePage.save();
+
+                                Dialog.alert(`Translation Completed........`);
+
+                            } catch (error) {
+                                console.dir(error);
+
+                            }
+                        }).catch((error: Error) => {
+                            console.dir(error);
+
+                        });
+                    }
+                }
 
             } catch (err) {
                 console.dir('aynsc error');
                 console.log(err);
             }
+
         })();
 
 
     }
 
+    private _alltranslateClientSideControl = async (translationService: ITranslationService, clientsideControls: ColumnControl<any>[], languagecode: string): Promise<void> => {
 
+        for (const c of clientsideControls) {
+            if (c instanceof ClientsideWebpart) {
+                // console.log(c);
+                if (c.data.webPartData?.serverProcessedContent?.searchablePlainTexts) {
+                    let propkeys = Object.keys(c.data.webPartData?.serverProcessedContent?.searchablePlainTexts);
+                    //console.log(propkeys.length + "    " + propkeys);
+                    for (const key of propkeys) {
+                        //console.log("Translation for key ... " + key);
+                        const propvalue = c.data.webPartData?.serverProcessedContent?.searchablePlainTexts[key];
+                        if (propvalue) {
+                            //console.log("Translation for value ... " + propvalue);
+                            let translationResult = await translationService.translate(propvalue, languagecode, false);
+                            const translatedText = translationResult.translations[0].text;
+                            c.data.webPartData.serverProcessedContent.searchablePlainTexts[key] = translatedText;
+                        }
 
-    private _getTranslatedText = (text: string, languagecode: string, asHtml: boolean): string => {
-
-
-        let translatedText: string = "";
-        if (text) {
-            // console.log('start');
-            const translationService: ITranslationService = environment.config.regionSpecifier
-                ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
-                : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
-
-            //TODO : uncomment the below code 
-            //translationService.translate(text, languagecode, false).then(translationResult =>
-            //    translatedText=translationResult.translations[0].text
-            //);
-
-            //TODO remove below code.
-            translatedText = "_ed";
-            // console.log('end');
+                    }
+                }
+            }
+            else if (c instanceof ClientsideText) {
+                const propvalue = c.text;
+                if (propvalue) {
+                    let translationResult = await translationService.translate(propvalue, languagecode, true);
+                    const translatedText = translationResult.translations[0].text;
+                    c.text = translatedText;
+                }
+            }
         }
-
-        console.log('end');
-        
-        return translatedText;
     }
+
+    //private _getTranslatedText = (text: string, languagecode: string, asHtml: boolean): string => {
+
+
+    //    let translatedText: string = "";
+    //    if (text) {
+    //        // console.log('start');
+    //        const translationService: ITranslationService = environment.config.regionSpecifier
+    //            ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
+    //            : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
+
+    //        //TODO : uncomment the below code 
+    //        //(async () => {
+
+    //        //    let translationResult = await translationService.translate(text, languagecode, asHtml);
+    //        //    translatedText = translationResult.translations[0].text
+
+        //console.log('end');
+        
+        //return translatedText;
+    //}
     //*************Function to get Multilingual Feature Enabled************************************* */
     public getMultiLingualFeatureEnabled = () : Promise<boolean> => {
         return new Promise<boolean>(async (resolve, reject) => {

@@ -32,6 +32,7 @@ import { Navigation } from "@pnp/sp/navigation";
 import { ITranslationService } from "../../services/ITranslationService";
 import { TranslationService } from "../../services/TranslationService";
 import { environment } from '../../environments/environment';
+import { SPPermission} from '@microsoft/sp-page-context';
 
 /**
  * If your command set uses the ClientSideComponentProperties JSON input,
@@ -56,15 +57,18 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
     @override
     public async onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): Promise<void> {
-        const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
         //checking for multilingual feature on site
         const langFeature: boolean = await this.getMultiLingualFeatureEnabled();
         //check if page is only the main page and nothing other then aspx page
         const validPage = (pageName): boolean => {
             return pageName.slice(10, pageName.lastIndexOf('/')).length === 0 && pageName.indexOf('.aspx') !== -1 ?  true :  false;
         }
-        
+
+        const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
         if (compareOneCommand) {
+            //TODO now checing for editlistitems permission.
+           // console.log(this.context.pageContext.list.permissions.hasPermission(SPPermission.editListItems));
+
             if (event.selectedRows.length == 1) {
                 //let pagename = event.selectedRows[0].getValueByName('FileLeafRef');
                 //Dialog.alert(pagename);
@@ -127,14 +131,15 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 //console.log('async/await source -> ', sourcepage);
 
                 if (targetpage != undefined) {
-                    const sourceRelativePageUrl: string = '/SitePages/' + this._pageName;
-                    const sourcepage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(sourceRelativePageUrl));
-                    console.log('async/await target -> ', targetpage);
-                    await sourcepage.copyTo(targetpage, true);
-
-                    console.log('Copy Completed.......');
-
+                    
                     if (confirm('Are you sure you want to translate this page')) {
+
+                        const sourceRelativePageUrl: string = '/SitePages/' + this._pageName;
+                        const sourcepage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(sourceRelativePageUrl));
+                        console.log('async/await target -> ', targetpage);
+                        await sourcepage.copyTo(targetpage, true);
+
+                        console.log('Copy Completed.......');
 
                         const translationService: ITranslationService = environment.config.regionSpecifier
                             ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)

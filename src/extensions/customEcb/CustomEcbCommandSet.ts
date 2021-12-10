@@ -99,18 +99,6 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
         console.log('_onTranslate');
 
-        //var siteUrl = this.context.pageContext.web.serverRelativeUrl;
-
-        // var sourcePageUrl = siteUrl + "/SitePages/" + selectedPage;
-        // var sourcePageUrl = siteUrl + "/SitePages/Home.aspx";
-        //sourcePageUrl = 'https://8p5g5n.sharepoint.com/SitePages/Home.aspx';
-        //console.log(sourcePageUrl);
-
-        //var targetPageUrl = 'https://8p5g5n.sharepoint.com/SitePages/de/Home.aspx';
-
-        //TODO we should use this._pageName
-        //const sourceRelativePageUrl: string = '/SitePages/Home.aspx';
-        //const targetRelativePageUrl: string = '/SitePages/de/Home.aspx';
         const targetRelativePageUrl: string = '/SitePages/' + languagecode + '/' + this._pageName;
 
         (async () => {

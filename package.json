@@ -13,7 +13,8 @@
     "@microsoft/sp-core-library": "1.12.1",
     "@microsoft/sp-dialog": "1.12.1",
     "@microsoft/sp-listview-extensibility": "1.12.1",
-    "@pnp/sp": "^2.11.0"
+    "@pnp/sp": "^2.11.0",
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@microsoft/sp-build-web": "1.12.1",

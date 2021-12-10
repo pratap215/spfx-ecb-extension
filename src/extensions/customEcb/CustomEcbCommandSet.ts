@@ -18,13 +18,14 @@ import { Layer } from "office-ui-fabric-react/lib/Layer";
 import { MessageBar, MessageBarType } from "office-ui-fabric-react/lib/MessageBar";
 import { Overlay } from "office-ui-fabric-react/lib/Overlay";
 import { IDetectedLanguage } from "../../models/IDetectedLanguage";
-
+import * as _ from "lodash";
 import { sp } from "@pnp/sp";
 import "@pnp/sp/webs";
 import "@pnp/sp/navigation";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
-import { ColumnControl, ClientsideText, ClientsideWebpart, IClientsidePage, ClientsidePageFromFile } from "@pnp/sp/clientside-pages";
+import "@pnp/sp/features";
+import { ColumnControl, ClientsideText, ClientsideWebpart, IClientsidePage, CreateClientsidePage, ClientsidePageFromFile } from "@pnp/sp/clientside-pages";
 import { ITranslationResult } from "../../models/ITranslationResult";
 import { Navigation } from "@pnp/sp/navigation";
 
@@ -54,13 +55,21 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     }
 
     @override
-    public onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): void {
+    public async onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): Promise<void> {
+
+        console.log('====================================');
+        console.log('onListViewUpdated');
+        console.log('====================================');
         const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
+        const langFeature: boolean = await this.getMultiLingualFeatureEnabled();
+        console.log(langFeature);
         if (compareOneCommand) {
-            if (event.selectedRows.length === 1) {
-                
-                // This command should be hidden unless exactly one row is selected.
-                compareOneCommand.visible = event.selectedRows.length === 1;
+            if (event.selectedRows.length == 1) {
+                //let pagename = event.selectedRows[0].getValueByName('FileLeafRef');
+                //Dialog.alert(pagename);
+
+                    // This command should be hidden unless exactly one row is selected.
+                    compareOneCommand.visible = event.selectedRows.length === 1 && langFeature ;
             }
         }
     }
@@ -216,18 +225,35 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
             // console.log('end');
         }
 
+        console.log('end');
+        
         return translatedText;
     }
 
-    //private _translatePageNav = async (navigation, languageCode): Promise<void> => {
-    //    const translationResult: string = await this._getTranslatedText(navigation, languageCode);
+    public getMultiLingualFeatureEnabled = () : Promise<boolean> => {
+        return new Promise<boolean>(async (resolve, reject) => {
+            let features = await sp.web.features.select("DisplayName", "DefinitionId").get().then(f => {
+                // console.log('====================================');
+                // f.map(f => {
+                //     console.log(f["DisplayName"] + " - " + f.DefinitionId);
+                // });
+                // console.log(f);
+                // console.log('====================================');
+                if(_.find(f, { "DisplayName": "MultilingualPages" })){
+                    return resolve(true);
+                }
+                else{
+                    return resolve(false);  
+                }
+            
+        }).catch(error => {
+            console.log(error);
+            return reject(false);
+        });
+        return resolve(false)
+    })
 
-    //    // get the title element
-    //    //const nav: Element = document.querySelector("div[data-automation-id='pageHeader'] div[role='heading']");
-    //    //if (nav) {
-    //    //    nav.textContent = translationResult;
-    //    //}
-    //}
+    }
 
 }
 

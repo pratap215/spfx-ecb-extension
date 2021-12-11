@@ -33,7 +33,7 @@ import { ITranslationService } from "../../services/ITranslationService";
 import { TranslationService } from "../../services/TranslationService";
 import { environment } from '../../environments/environment';
 import { SPPermission } from '@microsoft/sp-page-context';
-
+//import ProgressDialog from '../components/ProgressDialog';
 /**
  * If your command set uses the ClientSideComponentProperties JSON input,
  * it will be deserialized into the BaseExtension.properties object.
@@ -48,6 +48,7 @@ const LOG_SOURCE: string = 'CustomEcbCommandSet';
 export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomEcbCommandSetProperties> {
 
     private _pageName: string | undefined;
+   // private dialog: ProgressDialog;
 
     @override
     public onInit(): Promise<void> {
@@ -106,13 +107,13 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 } catch (error) {
                     console.dir(error);
                     console.log('source page not found ' + this._pageName);
-                    Dialog.alert('Source page ' + this._pageName + ' not found in [Site Pages] Library,Please contact admin....');
+                    Dialog.alert('Source page [' + this._pageName + '] not found in [Site Pages] Library,Please contact admin....');
                 }
                 console.log('async/await source -> ', sourcepage);
-
+               
                 if (sourcepage != undefined) {
 
-                    if (confirm('Are you sure you want to translate this page')) {
+                    if (confirm('Are you sure you want to translate this page[' + this._pageName +']')) {
 
                         const targetRelativePageUrl: string = '/SitePages/' + languagecode + '/' + this._pageName;
                         const targetpage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(targetRelativePageUrl));
@@ -163,11 +164,12 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                             } catch (error) {
                                 console.dir(error);
+                                
 
                             }
                         }).catch((error: Error) => {
                             console.dir(error);
-
+                            
                         });
                     }
                 }
@@ -175,6 +177,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
             } catch (err) {
                 console.dir('aynsc error');
                 console.log(err);
+                
             }
 
         })();
@@ -210,6 +213,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         } catch (err) {
             console.dir('aynsc error');
             console.log(err);
+            
         }
     }
 

@@ -86,7 +86,9 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         switch (event.itemId) {
             case 'ShowDetails':
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
-                this._onTranslate('de');
+                if (confirm('Are you sure you want to translate this page[' + this._pageName + ']')) {
+                    this._onTranslate('de');
+                }
                 break;
             default:
                 throw new Error('Unknown command');
@@ -108,12 +110,11 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     console.dir(error);
                     console.log('source page not found ' + this._pageName);
                     Dialog.alert('Source page [' + this._pageName + '] not found in [Site Pages] Library,Please contact admin....');
+                    return;
                 }
                 console.log('async/await source -> ', sourcepage);
                
                 if (sourcepage != undefined) {
-
-                    if (confirm('Are you sure you want to translate this page[' + this._pageName +']')) {
 
                         const targetRelativePageUrl: string = '/SitePages/' + languagecode + '/' + this._pageName;
                         const targetpage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(targetRelativePageUrl));
@@ -125,7 +126,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                             ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
                             : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
 
-                        Dialog.alert(`Copy Completed.......Starting Translation.`);
+                        Dialog.alert(`Starting Translation............`);
 
                         await new Promise(resolve => setTimeout(resolve, 5000));
 
@@ -171,7 +172,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                             console.dir(error);
                             
                         });
-                    }
+                    
                 }
 
             } catch (err) {

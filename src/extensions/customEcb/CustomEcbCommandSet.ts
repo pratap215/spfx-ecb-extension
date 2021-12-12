@@ -60,9 +60,10 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     public async onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): Promise<void> {
         //checking for multilingual feature on site
         const langFeature: boolean = await this.getMultiLingualFeatureEnabled();
-        //check if page is only the main page and nothing other then aspx page
+        //check if page is only the language folder and not the mail page + nothing other then aspx page
         const validPage = (pageName): boolean => {
-            return pageName.slice(10, pageName.lastIndexOf('/')).length === 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
+            // return pageName.slice(10, pageName.lastIndexOf('/')).length === 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
+            return pageName.slice(10, pageName.lastIndexOf('/')).length > 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
         }
 
         const compareOneCommand: Command = this.tryGetCommand('ShowDetails');

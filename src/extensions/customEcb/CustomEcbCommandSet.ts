@@ -248,6 +248,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 else {
                     return resolve(false);
                 }
+                //test comment for push
 
             }).catch(error => {
                 console.log(error);

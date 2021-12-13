@@ -70,7 +70,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
             //TODO now checing for editlistitems permission.
             // console.log(this.context.pageContext.list.permissions.hasPermission(SPPermission.editListItems));
 
-            if (event.selectedRows.length == 1) {
+            if (event.selectedRows.length === 1) {
                 //let pagename = event.selectedRows[0].getValueByName('FileLeafRef');
                 //Dialog.alert(pagename);
 

@@ -1,9 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <Elements xmlns="http://schemas.microsoft.com/sharepoint/">
     <ClientSideComponentInstance
-        Title="CustomEcb"
-        Location="ClientSideExtension.ListViewCommandSet"
-        ListTemplateId="119"
-        Properties="{&quot;targetUrl&quot;:&quot;Home.aspx&quot;}"
-        ComponentId="fb8c8a4d-517a-432a-b301-ccc4183507c9" />
+    Title="CustomEcb"
+    Location="ClientSideExtension.ListViewCommandSet.ContextMenu"
+    ListTemplateId="119"
+    Properties="{&quot;targetUrl&quot;:&quot;Home.aspx&quot;}"
+    ComponentId="fb8c8a4d-517a-432a-b301-ccc4183507c9"
+  />
 </Elements>

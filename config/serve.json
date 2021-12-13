@@ -7,7 +7,7 @@
       "pageUrl": "https://8p5g5n.sharepoint.com/SitePages/Forms/ByAuthor.aspx",
       "customActions": {
         "fb8c8a4d-517a-432a-b301-ccc4183507c9": {
-          "location": "ClientSideExtension.ListViewCommandSet",
+          "location": "ClientSideExtension.ListViewCommandSet.ContextMenu",
           "properties": {
             "sampleTextOne": "One item is selected in the list",
             "sampleTextTwo": "This command is always visible."
@@ -16,10 +16,10 @@
       }
     },
     "customEcb": {
-      "pageUrl": "https://8p5g5n.sharepoint.com/SitePages/Forms/ByAuthor.aspx",
+      "pageUrl": "https://8p5g5n.sharepoint.com/SitePages/Forms/ByAuthor2222.aspx",
       "customActions": {
         "fb8c8a4d-517a-432a-b301-ccc4183507c9": {
-          "location": "ClientSideExtension.ListViewCommandSet",
+          "location": "ClientSideExtension.ListViewCommandSet.ContextMenu",
           "properties": {
             "sampleTextOne": "One item is selected in the list",
             "sampleTextTwo": "This command is always visible."

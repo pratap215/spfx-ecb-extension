@@ -48,35 +48,26 @@ const LOG_SOURCE: string = 'CustomEcbCommandSet';
 export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomEcbCommandSetProperties> {
 
     private _pageName: string | undefined;
+    private _multilingual: boolean;
    // private dialog: ProgressDialog;
 
     @override
-    public onInit(): Promise<void> {
+    public async onInit(): Promise<void> {
         Log.info(LOG_SOURCE, 'Initialized CustomEcbCommandSet');
+        this._multilingual = await this.getMultiLingualFeatureEnabled();
         return Promise.resolve();
     }
 
     @override
     public async onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): Promise<void> {
-        //checking for multilingual feature on site
-        const langFeature: boolean = await this.getMultiLingualFeatureEnabled();
-        //check if page is only the main page and nothing other then aspx page
-        const validPage = (pageName): boolean => {
-            return pageName.slice(10, pageName.lastIndexOf('/')).length === 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
-        };
-
         const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
+        const validPage = (pageName): boolean => {
+            return pageName.slice(10, pageName.lastIndexOf('/')).length > 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
+        };
         if (compareOneCommand) {
-            //TODO now checing for editlistitems permission.
-            // console.log(this.context.pageContext.list.permissions.hasPermission(SPPermission.editListItems));
-
-            if (event.selectedRows.length === 1) {
-                //let pagename = event.selectedRows[0].getValueByName('FileLeafRef');
-                //Dialog.alert(pagename);
-
-                // This command should be hidden unless exactly one row is selected.
+            if (event.selectedRows.length === 1) {             
                 const pageName: string = event.selectedRows[0].getValueByName("FileRef");
-                compareOneCommand.visible = event.selectedRows.length === 1 && langFeature && validPage(pageName);
+                compareOneCommand.visible = validPage(pageName) && this._multilingual && event.selectedRows.length === 1;
             }
         }
     }

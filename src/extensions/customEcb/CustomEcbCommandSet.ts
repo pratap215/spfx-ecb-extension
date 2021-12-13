@@ -57,9 +57,11 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     }
     @override
     public async onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): Promise<void> {
+        
         //checking for multilingual feature on site
         const langFeature: boolean = await this.getMultiLingualFeatureEnabled();
         //check if page is only the language folder and not the mail page + nothing other then aspx page
+       
         const validPage = (pageName): boolean => {
             // return pageName.slice(10, pageName.lastIndexOf('/')).length === 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
             return pageName.slice(10, pageName.lastIndexOf('/')).length > 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
@@ -67,16 +69,34 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
         const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
         if (compareOneCommand) {
+            compareOneCommand.visible = false
             //TODO now checing for editlistitems permission.
             // console.log(this.context.pageContext.list.permissions.hasPermission(SPPermission.editListItems));
+            let pageName: string | undefined = '';
 
-            if (event.selectedRows.length == 1) {
-                //let pagename = event.selectedRows[0].getValueByName('FileLeafRef');
+                if(event.selectedRows[0] !== undefined){
+
+                    pageName = await event.selectedRows[0].getValueByName("FileRef");
+                }
+                else{
+                    pageName = undefined;
+                }
+            if (event.selectedRows.length === 1) {
+                // let pagename = event.selectedRows.getValueByName('FileLeafRef');
                 //Dialog.alert(pagename);
 
                 // This command should be hidden unless exactly one row is selected.
-                const pageName: string = event.selectedRows[0].getValueByName("FileRef");
-                compareOneCommand.visible = event.selectedRows.length === 1 && langFeature && validPage(pageName);;
+                if(pageName === undefined){
+                    compareOneCommand.visible = false
+                }
+                else if(langFeature && validPage(pageName)){
+                    compareOneCommand.visible = true
+                }
+                else{
+                    compareOneCommand.visible = false
+                }
+                
+                
             }
         }
     }

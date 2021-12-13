@@ -55,7 +55,6 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         Log.info(LOG_SOURCE, 'Initialized CustomEcbCommandSet');
         return Promise.resolve();
     }
-
     @override
     public async onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): Promise<void> {
         //checking for multilingual feature on site

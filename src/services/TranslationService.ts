@@ -79,6 +79,8 @@ export class TranslationService implements ITranslationService {
     return null;
   }
 
+
+
     public async translate(sourceText: string, languageCode: string, asHtml: boolean): Promise<ITranslationResult> {
 
         console.log("In translate method");

@@ -4,7 +4,7 @@
         Title="CustomEcb"
         RegistrationId="119"
         RegistrationType="List"
-        Location="ClientSideExtension.ListViewCommandSet.ContextMenu"
+        Location="ClientSideExtension.ListViewCommandSet"
         ClientSideComponentId="fb8c8a4d-517a-432a-b301-ccc4183507c9"
          ClientSideComponentProperties="{&quot;targetUrl&quot;:&quot;Home.aspx&quot;}">
     </CustomAction>

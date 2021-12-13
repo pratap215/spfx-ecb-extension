@@ -63,7 +63,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         //check if page is only the main page and nothing other then aspx page
         const validPage = (pageName): boolean => {
             return pageName.slice(10, pageName.lastIndexOf('/')).length === 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
-        }
+        };
 
         const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
         if (compareOneCommand) {
@@ -76,7 +76,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                 // This command should be hidden unless exactly one row is selected.
                 const pageName: string = event.selectedRows[0].getValueByName("FileRef");
-                compareOneCommand.visible = event.selectedRows.length === 1 && langFeature && validPage(pageName);;
+                compareOneCommand.visible = event.selectedRows.length === 1 && langFeature && validPage(pageName);
             }
         }
     }
@@ -85,6 +85,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     public onExecute(event: IListViewCommandSetExecuteEventParameters): void {
         switch (event.itemId) {
             case 'ShowDetails':
+                console.log('onExecute start');
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
                 if (confirm('Are you sure you want to translate this page[' + this._pageName + ']')) {
                     this._onTranslate('de');
@@ -97,7 +98,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
 
     private _onTranslate = (languagecode: string): void => {
-        console.log('_onTranslate');
+        console.log('_onTranslate start');
 
         (async () => {
             try {
@@ -109,7 +110,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 } catch (error) {
                     console.dir(error);
                     console.log('source page not found ' + this._pageName);
-                    Dialog.alert('Source page [' + this._pageName + '] not found in [Site Pages] Library,Please contact admin....');
+                    Dialog.alert('Original page [' + this._pageName + '] not exists.Contact Admin');
                     return;
                 }
                 console.log('async/await source -> ', sourcepage);
@@ -254,8 +255,8 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 console.log(error);
                 return reject(false);
             });
-            return resolve(false)
-        })
+            return resolve(false);
+        });
 
     }
 

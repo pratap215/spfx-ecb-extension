@@ -1,4 +1,5 @@
-﻿$AppCatalogURL = "https://8p5g5n.sharepoint.com/sites/appcatalog"
+﻿cls
+$AppCatalogURL = "https://8p5g5n.sharepoint.com/sites/appcatalog"
 $AppName = "spfx-ecb-extension-client-side-solution"
 
 Connect-PnPOnline -Url $AppCatalogURL -UseWebLogin 

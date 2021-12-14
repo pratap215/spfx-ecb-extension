@@ -34,6 +34,7 @@ import { TranslationService } from "../../services/TranslationService";
 import { environment } from '../../environments/environment';
 import { SPPermission } from '@microsoft/sp-page-context';
 //import ProgressDialog from '../components/ProgressDialog';
+import { SPHttpClient, SPHttpClientResponse, SPHttpClientConfiguration } from '@microsoft/sp-http';
 /**
  * If your command set uses the ClientSideComponentProperties JSON input,
  * it will be deserialized into the BaseExtension.properties object.
@@ -47,9 +48,16 @@ const LOG_SOURCE: string = 'CustomEcbCommandSet';
 
 export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomEcbCommandSetProperties> {
 
-    private _pageName: string | undefined;
     private _multilingual: boolean;
-   // private dialog: ProgressDialog;
+    private _pageName: string | undefined;
+    private _listId: string | undefined;
+    private _listItemId: string | undefined;
+    private _targetPageurl: string | undefined;
+    private _sourcePageurl: string | undefined;
+
+    private _sPTranslationSourceItemId: Guid | undefined;
+    private _sPTranslationLanguage: string | undefined;
+    private _sPTranslatedLanguages: Array<string> | undefined;
 
     @override
     public async onInit(): Promise<void> {
@@ -65,7 +73,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
             return pageName.slice(10, pageName.lastIndexOf('/')).length > 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
         };
         if (compareOneCommand) {
-            if (event.selectedRows.length === 1) {             
+            if (event.selectedRows.length === 1) {
                 const pageName: string = event.selectedRows[0].getValueByName("FileRef");
                 compareOneCommand.visible = validPage(pageName) && this._multilingual && event.selectedRows.length === 1;
             }
@@ -79,7 +87,11 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 console.log('onExecute start');
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
                 if (confirm('Are you sure you want to translate this page[' + this._pageName + ']')) {
-                    this._onTranslate('de');
+
+                    this._listId = this.context.pageContext.list.id.toString();
+                    this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
+
+                    this._onTranslate();
                 }
                 break;
             default:
@@ -88,13 +100,33 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     }
 
 
-    private _onTranslate = (languagecode: string): void => {
+    private _onTranslate = (): void => {
         console.log('_onTranslate start');
 
         (async () => {
             try {
+
+                const isValidTargetFile = await this.getTranslationPageMetaData();
+
+                console.log(this._targetPageurl);
+
+                if (isValidTargetFile == false) {
+                    Dialog.alert('Page cannot be translated.Contact Admin');
+                    return;
+                }
+
+               
+
+                const isValidSourceFile = await this.getSourcePageMetaData(this._sPTranslationSourceItemId);
+
+                if (isValidSourceFile == false) {
+                    Dialog.alert('Original page not exists.Contact Admin');
+                    return;
+                }
+
                 console.log('Copying......... ');
-                const sourceRelativePageUrl: string = '/SitePages/' + this._pageName;
+                // const sourceRelativePageUrl: string = '/SitePages/' + this._pageName;
+                const sourceRelativePageUrl: string = this._sourcePageurl;
                 let sourcepage: IClientsidePage = undefined;
                 try {
                     sourcepage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(sourceRelativePageUrl));
@@ -105,72 +137,75 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     return;
                 }
                 console.log('async/await source -> ', sourcepage);
-               
+
                 if (sourcepage != undefined) {
 
-                        const targetRelativePageUrl: string = '/SitePages/' + languagecode + '/' + this._pageName;
-                        const targetpage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(targetRelativePageUrl));
-                        await sourcepage.copyTo(targetpage, true);
+                    const languagecode: string = this._sPTranslationLanguage;
 
-                        console.log('Copy Completed.......');
+                    // const targetRelativePageUrl: string = '/SitePages/' + languagecode + '/' + this._pageName;
+                    const targetRelativePageUrl: string = this._targetPageurl;
+                    const targetpage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(targetRelativePageUrl));
+                    await sourcepage.copyTo(targetpage, true);
 
-                        const translationService: ITranslationService = environment.config.regionSpecifier
-                            ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
-                            : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
+                    console.log('Copy Completed.......');
 
-                        Dialog.alert(`Starting Translation............`);
+                    const translationService: ITranslationService = environment.config.regionSpecifier
+                        ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
+                        : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
 
-                        await new Promise(resolve => setTimeout(resolve, 5000));
+                    Dialog.alert(`Starting Translation............ ` + languagecode);
 
-                        sp.web.loadClientsidePage(targetRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
+                    await new Promise(resolve => setTimeout(resolve, 5000));
 
-                            try {
-                                console.log('translation started');
+                    sp.web.loadClientsidePage(targetRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
 
-                                var clientControls: ColumnControl<any>[] = [];
-                                clientSidePage.findControl((c) => {
-                                    if (c instanceof ClientsideText) {
-                                        clientControls.push(c);
-                                    }
-                                    else if (c instanceof ClientsideWebpart) {
-                                        clientControls.push(c);
-                                    }
-                                    return false;
-                                });
+                        try {
+                            console.log('translation started');
 
-                                await this._alltranslateClientSideControl(translationService, clientControls, languagecode);
+                            var clientControls: ColumnControl<any>[] = [];
+                            clientSidePage.findControl((c) => {
+                                if (c instanceof ClientsideText) {
+                                    clientControls.push(c);
+                                }
+                                else if (c instanceof ClientsideWebpart) {
+                                    clientControls.push(c);
+                                }
+                                return false;
+                            });
 
-                                //const nav = sp.web.navigation.topNavigationBar;
-                                //Dialog.alert(nav.length.toString());
-                                //const childrenData = await nav.getById(1).children();
-                                //await nav.getById(1).update({
-                                //    Title: "A new title",
-                                //});
+                            await this._alltranslateClientSideControl(translationService, clientControls, languagecode);
 
-                                //clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
+                            //const nav = sp.web.navigation.topNavigationBar;
+                            //Dialog.alert(nav.length.toString());
+                            //const childrenData = await nav.getById(1).children();
+                            //await nav.getById(1).update({
+                            //    Title: "A new title",
+                            //});
 
-                                clientSidePage.save();
+                            //clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
 
-                                console.log('translation complete');
+                            clientSidePage.save();
 
-                                Dialog.alert(`Translation Completed........`);
+                            console.log('translation complete');
 
-                            } catch (error) {
-                                console.dir(error);
-                                
+                            Dialog.alert(`Translation Completed........`);
 
-                            }
-                        }).catch((error: Error) => {
+                        } catch (error) {
                             console.dir(error);
-                            
-                        });
-                    
+
+
+                        }
+                    }).catch((error: Error) => {
+                        console.dir(error);
+
+                    });
+
                 }
 
             } catch (err) {
                 console.dir('aynsc error');
                 console.log(err);
-                
+
             }
 
         })();
@@ -206,7 +241,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         } catch (err) {
             console.dir('aynsc error');
             console.log(err);
-            
+
         }
     }
 
@@ -250,6 +285,153 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         });
 
     }
+
+
+    //Metadata start
+
+    public async getTranslationPageMetaData(): Promise<boolean> {
+        console.log('getTranslationPageMetaData');
+        try {
+            const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+            const result = await this.context.spHttpClient.post(siteurl, SPHttpClient.configurations.v1, {
+                body: JSON.stringify({
+                    parameters: {
+                        ViewXml: `<View Scope="RecursiveAll">
+                  <ViewFields>
+                    <FieldRef Name="_SPIsTranslation" />
+                    <FieldRef Name="_SPTranslatedLanguages" />
+                    <FieldRef Name="_SPTranslationLanguage" />
+                    <FieldRef Name="_SPTranslationSourceItemId" />
+                  </ViewFields>
+                  <Query>
+                    <Where>
+                    <Eq>
+                        <FieldRef Name="ID" />
+                        <Value Type="Number">${this._listItemId}</Value>
+                    </Eq>
+                </Where>
+                  </Query>
+                  <RowLimit />
+                </View>`
+                    }
+                })
+            });
+
+            if (!result.ok) {
+                console.log('failed getTranslationPageMetaData');
+                const resultData: any = await result.json();
+                console.log(resultData.error);
+                return false;
+            }
+            else {
+                console.log("success getTranslationPageMetaData");
+                const data: any = await result.json();
+                // console.log(data);
+                if (data && data.Row && data.Row.length > 0) {
+                    const row = data.Row[0];
+                    console.log("target page info");
+                    console.log(row);
+                    if (row["_SPIsTranslation"] == "Yes") {
+                        //  this._sPTranslationSourceItemId = row["_SPTranslationSourceItemId"].toString().replace("{", "").replace("}", "").trim();
+                        this._sPTranslationSourceItemId = row["_SPTranslationSourceItemId"].toString();
+                        this._sPTranslationLanguage = row["_SPTranslationLanguage"];
+                        this._targetPageurl = row["FileRef"];
+
+                        //console.log(Object.keys(row));
+                        return true;
+                    }
+                }
+            }
+
+        } catch (e) {
+            console.log('error getTranslationPageMetaData');
+            console.log(e);
+            return false;
+        }
+
+        return false;
+    }
+
+
+
+    public async getSourcePageMetaData(pageid: Guid): Promise<boolean> {
+        console.log("");
+        console.log('getSourcePageMetaData :' + pageid);
+
+        // const uniqid = "{9956AB6B-9C81-4448-88D3-634BC9536D34}";
+        //var currentPageUrl = this.context.pageContext.site.serverRequestPath;
+
+        //sp.web.lists.getByTitle("Site Pages").items.get().then((items: any[]) => {
+        //   console.log(items[0]);
+        //});
+
+        //sp.web.lists.getById("${this._listId}").items.get().then((items: any[]) => {
+        //    console.log(items[0]);
+        //});
+
+        //const siteAssetsList = await sp.web.lists.ensureSitePagesLibrary();
+        //const r = await siteAssetsList.select("Title")();
+        //    console.log(r);
+
+        try {
+            const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+            const result = await this.context.spHttpClient.post(siteurl, SPHttpClient.configurations.v1, {
+                body: JSON.stringify({
+                    parameters: {
+                        ViewXml: `<View Scope="RecursiveAll">
+                  <ViewFields>
+                    <FieldRef Name="_SPIsTranslation" />
+                    <FieldRef Name="_SPTranslatedLanguages" />
+                    <FieldRef Name="_SPTranslationLanguage" />
+                    <FieldRef Name="_SPTranslationSourceItemId" />
+                  </ViewFields>
+                  <Query>
+                    <Where>
+                    <Eq>
+                        <FieldRef Name="UniqueId" />
+                        <Value Type="Guid">${pageid}</Value>
+                    </Eq>
+                </Where>
+                  </Query>
+                  <RowLimit />
+                </View>`
+                    }
+                })
+            });
+
+            if (!result.ok) {
+                console.log('failed getSourcePageMetaData');
+                const resultData: any = await result.json();
+                console.log(resultData.error);
+                return false;
+            }
+            else {
+                console.log("success getSourcePageMetaData2");
+                const data: any = await result.json();
+                // console.log(data);
+                if (data && data.Row && data.Row.length > 0) {
+                    const row = data.Row[0];
+                    console.log("source page info");
+                    console.log(row);
+                    this._sourcePageurl = row["FileRef"];
+                    this._sPTranslatedLanguages = row["_SPTranslatedLanguages"];
+                    console.log(this._sPTranslatedLanguages);
+                    return true;
+                }
+            }
+
+        } catch (e) {
+            console.log('error getTranslationPageMetaData');
+            console.log(e);
+            return false;
+        }
+
+        return false;
+    }
+
+
+    //Metadata end
+
 
 }
 

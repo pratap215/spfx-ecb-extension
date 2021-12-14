@@ -18,7 +18,7 @@
   "items": {
     "ShowDetails": {
       "title": {
-        "default": "Translate to German v2"
+        "default": "Translate to German"
       },
       "type": "command"
     }

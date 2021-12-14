@@ -3,7 +3,7 @@
   "solution": {
     "name": "spfx-ecb-extension-client-side-solution",
     "id": "f22b6692-ca90-406f-870c-fe5bc4f9c3a0",
-    "version": "1.0.0.1",
+    "version": "1.0.0.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,

@@ -25,6 +25,8 @@ import "@pnp/sp/navigation";
 import "@pnp/sp/lists";
 import "@pnp/sp/items";
 import "@pnp/sp/features";
+import "@pnp/sp/site-users/web";
+// import { SPPermission } from '@microsoft/sp-page-context'
 import { ColumnControl, ClientsideText, ClientsideWebpart, IClientsidePage, CreateClientsidePage, ClientsidePageFromFile } from "@pnp/sp/clientside-pages";
 import { ITranslationResult } from "../../models/ITranslationResult";
 import { Navigation } from "@pnp/sp/navigation";
@@ -50,6 +52,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
     private _multilingual: boolean;
     private _pageName: string | undefined;
+    private _getUserPermissions: boolean | undefined;
     private _listId: string | undefined;
     private _listItemId: string | undefined;
     private _targetPageurl: string | undefined;
@@ -63,6 +66,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     public async onInit(): Promise<void> {
         Log.info(LOG_SOURCE, 'Initialized CustomEcbCommandSet');
         this._multilingual = await this.getMultiLingualFeatureEnabled();
+        this._getUserPermissions = await this.getUsersPermissions();
         return Promise.resolve();
     }
 
@@ -75,7 +79,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         if (compareOneCommand) {
             if (event.selectedRows.length === 1) {
                 const pageName: string = event.selectedRows[0].getValueByName("FileRef");
-                compareOneCommand.visible = validPage(pageName) && this._multilingual && event.selectedRows.length === 1;
+                compareOneCommand.visible = this._getUserPermissions && validPage(pageName) && this._multilingual && event.selectedRows.length === 1;
             }
         }
     }
@@ -282,6 +286,23 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 return reject(false);
             });
             return resolve(false);
+        });
+
+    }
+    //*************Function to check user's effective permissions************************************* */
+    //Will work if user belongs to Owners or Members group => Manage list permissions
+    //Promise can be removed, however doesn't harm if used with async
+    public getUsersPermissions = (): Promise<boolean> => {
+        return new Promise<boolean>(async (resolve, reject) => {
+            try{
+                let userHasPermissions: boolean = false;
+                userHasPermissions = this.context.pageContext.list.permissions.hasPermission(SPPermission.manageLists)
+                return resolve(userHasPermissions);
+            }
+            catch(error){
+                console.log(error);
+                return reject(false);
+            }
         });
 
     }

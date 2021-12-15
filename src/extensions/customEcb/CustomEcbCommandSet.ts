@@ -313,7 +313,9 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     public async getTranslationPageMetaData(): Promise<boolean> {
         console.log('getTranslationPageMetaData');
         try {
-            const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+            const absoluteurl = this.context.pageContext.web.absoluteUrl;
+            const siteurl = `${absoluteurl}/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+          //  const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
             const result = await this.context.spHttpClient.post(siteurl, SPHttpClient.configurations.v1, {
                 body: JSON.stringify({
                     parameters: {
@@ -395,7 +397,10 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         //    console.log(r);
 
         try {
-            const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+           // const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+            const absoluteurl = this.context.pageContext.web.absoluteUrl;
+            const siteurl = `${absoluteurl}/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+
             const result = await this.context.spHttpClient.post(siteurl, SPHttpClient.configurations.v1, {
                 body: JSON.stringify({
                     parameters: {

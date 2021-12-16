@@ -99,7 +99,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                 this._dialog.show();
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
-                if (confirm('Are you sure you want to translate this page to [' + this.getLanguageName(this._sPTranslationLanguage) + ']')) {
+                if (confirm('Are you sure you want to translate this page [' + this._pageName + ']')) {
 
                     // ProgressDialogContent.show(dialog);
                     this._listId = this.context.pageContext.list.id.toString();

@@ -96,11 +96,11 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         switch (event.itemId) {
             case 'ShowDetails':
                 console.log('onExecute start');
-                
+
                 this._dialog.show();
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
-                if (confirm('Are you sure you want to translate this page[' + this._pageName + ']')) {
-                    
+                if (confirm('Are you sure you want to translate this page to [' + this.getLanguageName(this._sPTranslationLanguage) + ']')) {
+
                     // ProgressDialogContent.show(dialog);
                     this._listId = this.context.pageContext.list.id.toString();
                     this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
@@ -130,7 +130,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     return;
                 }
 
-               
+
 
                 const isValidSourceFile = await this.getSourcePageMetaData(this._sPTranslationSourceItemId);
 
@@ -160,7 +160,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     // const targetRelativePageUrl: string = '/SitePages/' + languagecode + '/' + this._pageName;
                     const targetRelativePageUrl: string = this._targetPageurl;
                     const targetpage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(targetRelativePageUrl));
-                    await sourcepage.copyTo(targetpage, true);
+                    await sourcepage.copyTo(targetpage, false);
 
                     console.log('Copy Completed.......');
 
@@ -172,49 +172,49 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                     await new Promise(resolve => setTimeout(resolve, 5000));
 
-                    sp.web.loadClientsidePage(targetRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
 
-                        try {
-                            console.log('translation started');
+                    //   sp.web.loadClientsidePage(targetRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
+                    try {
+                        console.log('translation started');
 
-                            var clientControls: ColumnControl<any>[] = [];
-                            clientSidePage.findControl((c) => {
-                                if (c instanceof ClientsideText) {
-                                    clientControls.push(c);
-                                }
-                                else if (c instanceof ClientsideWebpart) {
-                                    clientControls.push(c);
-                                }
-                                return false;
-                            });
+                        var clientControls: ColumnControl<any>[] = [];
+                        targetpage.findControl((c) => {
+                            if (c instanceof ClientsideText) {
+                                clientControls.push(c);
+                            }
+                            else if (c instanceof ClientsideWebpart) {
+                                clientControls.push(c);
+                            }
+                            return false;
+                        });
 
-                            await this._alltranslateClientSideControl(translationService, clientControls, languagecode);
+                        await this._alltranslateClientSideControl(translationService, clientControls, languagecode);
 
-                            //const nav = sp.web.navigation.topNavigationBar;
-                            //Dialog.alert(nav.length.toString());
-                            //const childrenData = await nav.getById(1).children();
-                            //await nav.getById(1).update({
-                            //    Title: "A new title",
-                            //});
+                        //const nav = sp.web.navigation.topNavigationBar;
+                        //Dialog.alert(nav.length.toString());
+                        //const childrenData = await nav.getById(1).children();
+                        //await nav.getById(1).update({
+                        //    Title: "A new title",
+                        //});
 
-                            //clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
+                        //clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
 
-                            clientSidePage.save();
+                        targetpage.save(false);
 
-                            console.log('translation complete');
+                        console.log('translation complete');
 
-                            Dialog.alert(`Translation Completed........`);
+                        Dialog.alert(`Translation Completed........`);
 
-                        } catch (error) {
-                            console.dir(error);
-                            this._dialog.close();
-
-                        }
-                    }).catch((error: Error) => {
+                    } catch (error) {
                         console.dir(error);
                         this._dialog.close();
 
-                    });
+                    }
+                    //}).catch((error: Error) => {
+                    //    console.dir(error);
+                    //    this._dialog.close();
+
+                    //});
 
                 }
 
@@ -307,12 +307,12 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     //Promise can be removed, however doesn't harm if used with async
     public getUsersPermissions = (): Promise<boolean> => {
         return new Promise<boolean>(async (resolve, reject) => {
-            try{
+            try {
                 let userHasPermissions: boolean = false;
                 userHasPermissions = this.context.pageContext.list.permissions.hasPermission(SPPermission.manageLists);
                 return resolve(userHasPermissions);
             }
-            catch(error){
+            catch (error) {
                 console.log(error);
                 return reject(false);
             }
@@ -328,7 +328,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         try {
             const absoluteurl = this.context.pageContext.web.absoluteUrl;
             const siteurl = `${absoluteurl}/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
-          //  const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+            //  const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
             const result = await this.context.spHttpClient.post(siteurl, SPHttpClient.configurations.v1, {
                 body: JSON.stringify({
                     parameters: {
@@ -410,7 +410,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         //    console.log(r);
 
         try {
-           // const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+            // const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
             const absoluteurl = this.context.pageContext.web.absoluteUrl;
             const siteurl = `${absoluteurl}/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
 

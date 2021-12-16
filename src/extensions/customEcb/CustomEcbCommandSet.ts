@@ -85,24 +85,8 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         };
         if (compareOneCommand) {
             if (event.selectedRows.length === 1) {
-                compareOneCommand.title = "Translate this page";
                 const pageName: string = event.selectedRows[0].getValueByName("FileRef");
                 compareOneCommand.visible = this._getUserPermissions && validPage(pageName) && this._multilingual && event.selectedRows.length === 1;
-
-                console.log("onListViewUpdated1");
-                this._listId = this.context.pageContext.list.id.toString();
-                this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
-                console.log("onListViewUpdated2");
-                const isValidTargetFile = await this.getTranslationPageMetaData();
-                if (isValidTargetFile) {
-                    compareOneCommand.title = "Translate to " + this.getLanguageName(this._sPTranslationLanguage);
-                    
-                }
-
-                console.log(compareOneCommand);
-                console.log(isValidTargetFile);
-                console.log("onListViewUpdated3");
-               
             }
         }
     }

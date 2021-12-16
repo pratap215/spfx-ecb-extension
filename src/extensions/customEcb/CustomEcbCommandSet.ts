@@ -85,8 +85,24 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         };
         if (compareOneCommand) {
             if (event.selectedRows.length === 1) {
+                compareOneCommand.title = "Translate this page";
                 const pageName: string = event.selectedRows[0].getValueByName("FileRef");
                 compareOneCommand.visible = this._getUserPermissions && validPage(pageName) && this._multilingual && event.selectedRows.length === 1;
+
+                console.log("onListViewUpdated1");
+                this._listId = this.context.pageContext.list.id.toString();
+                this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
+                console.log("onListViewUpdated2");
+                const isValidTargetFile = await this.getTranslationPageMetaData();
+                if (isValidTargetFile) {
+                    compareOneCommand.title = "Translate to " + this.getLanguageName(this._sPTranslationLanguage);
+                    
+                }
+
+                console.log(compareOneCommand);
+                console.log(isValidTargetFile);
+                console.log("onListViewUpdated3");
+               
             }
         }
     }
@@ -309,7 +325,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         return new Promise<boolean>(async (resolve, reject) => {
             try{
                 let userHasPermissions: boolean = false;
-                userHasPermissions = this.context.pageContext.list.permissions.hasPermission(SPPermission.manageLists)
+                userHasPermissions = this.context.pageContext.list.permissions.hasPermission(SPPermission.manageLists);
                 return resolve(userHasPermissions);
             }
             catch(error){
@@ -468,7 +484,67 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         return false;
     }
 
+    private getLanguageName(code: string): string {
+        console.log("getLanguageName " + code);
+        const regionalLanguages = `{"ar-sa":"Arabic",
+"az-latn-az":"Azerbaijani",
+"eu-es":"Basque",
+"bs-latn-ba":"Bosnian (Latin)",
+"bg-bg":"Bulgarian",
+"ca-es":"Catalan",
+"zh-cn":"Chinese (Simplified)",
+"zh-tw":"Chinese (Traditional)",
+"hr-hr":"Croatian",
+"cs-cz":"Czech",
+"da-dk":"Danish",
+"prs-af":"Dari",
+"nl-nl":"Dutch",
+"en-us":"English",
+"et-ee":"Estonian",
+"fi-fi":"Finnish",
+"fr-fr":"French",
+"gl-es":"Galician",
+"de-de":"German",
+"el-gr":"Greek",
+"he-il":"Hebrew",
+"hi-in":"Hindi",
+"hu-hu":"Hungarian",
+"id-id":"Indonesian",
+"ga-ie":"Irish",
+"it-it":"Italian",
+"ja-jp":"Japanese",
+"kk-kz":"Kazakh",
+"ko-kr":"Korean",
+"lv-lv":"Latvian",
+"lt-lt":"Lithuanian",
+"mk-mk":"Macedonian",
+"ms-my":"Malay",
+"nb-no":"Norwegian (Bokmål)",
+"pl-pl":"Polish",
+"pt-br":"Portuguese (Brazil)",
+"pt-pt":"Portuguese (Portugal)",
+"ro-ro":"Romanian",
+"ru-ru":"Russian",
+"sr-cyrl-rs":"Serbian (Cyrillic, Serbia)",
+"sr-latn-cs":"Serbian (Latin)",
+"sr-latn-rs":"Serbian (Latin, Serbia)",
+"sk-sk":"Slovak",
+"sl-si":"Slovenian",
+"es-es":"Spanish",
+"sv-se":"Swedish",
+"th-th":"Thai",
+"tr-tr":"Turkish",
+"uk-ua":"Ukrainian",
+"vi-vn":"Vietnamese",
+"cy-gb":"Welsh"}`;
 
+        const languageNames = JSON.parse(regionalLanguages);
+
+        console.log("getLanguageName name " + languageNames["de-de"]);
+
+        return languageNames[code.toLowerCase()];
+
+    }
     //Metadata end
 
 

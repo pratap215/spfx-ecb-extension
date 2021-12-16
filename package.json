@@ -14,7 +14,8 @@
     "@microsoft/sp-dialog": "1.12.1",
     "@microsoft/sp-listview-extensibility": "1.12.1",
     "@pnp/sp": "^2.11.0",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "office-ui-fabric-react": "^7.180.1"
   },
   "devDependencies": {
     "@microsoft/rush-stack-compiler-3.7": "0.2.3",

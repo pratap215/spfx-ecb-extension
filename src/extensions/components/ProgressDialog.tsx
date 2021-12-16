@@ -2,7 +2,9 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { BaseDialog, IDialogConfiguration } from '@microsoft/sp-dialog';
 import { ProgressIndicator } from 'office-ui-fabric-react/lib/ProgressIndicator';
-import { DialogContent } from 'office-ui-fabric-react';
+import { DialogContent, IStackTokens, Label, Spinner, Stack } from 'office-ui-fabric-react';
+// import { Spinner } from '@fluentui/react/lib/Spinner';
+
 import { sp } from '@pnp/sp';
 
 interface IProgressDialogContentProps {
@@ -18,8 +20,11 @@ interface IProgressDialogContentState {
     labelname: string;
     description: string;
 }
-
-class ProgressDialogContent extends React.Component<IProgressDialogContentProps, IProgressDialogContentState> {
+const stackTokens: IStackTokens = {
+    childrenGap: 20,
+    maxWidth: 250,
+  };
+export class ProgressDialogContent extends React.Component<IProgressDialogContentProps, IProgressDialogContentState> {
 
     constructor(props: IProgressDialogContentProps) {
         super(props);
@@ -41,19 +46,19 @@ class ProgressDialogContent extends React.Component<IProgressDialogContentProps,
         //   });
         //   console.log('hh');
         // });
+        // commented this for loop for testing on 16/12
+        // for (let i = 2; i < 11; i++) {
+        //     setTimeout(() => {
+        //         this.setState({
+        //             Progress: i / 10
+        //         });
 
-        for (let i = 2; i < 11; i++) {
-            setTimeout(() => {
-                this.setState({
-                    Progress: i / 10
-                });
+        //         if (this.state.Progress == 1) {
+        //             this.props.close();
+        //         }
 
-                if (this.state.Progress == 1) {
-                    this.props.close();
-                }
-
-            }, 1000);
-        }
+        //     }, 1000);
+        // }
     }
 
     public render(): JSX.Element {
@@ -61,7 +66,12 @@ class ProgressDialogContent extends React.Component<IProgressDialogContentProps,
             title='Translation'
             showCloseButton={false}
         >
-            <ProgressIndicator label={this.state.labelname} description={this.state.description} percentComplete={this.state.Progress}></ProgressIndicator>
+            <Stack tokens={stackTokens}>
+      <div>
+        <Spinner label="Working on it..." />
+      </div>
+      </Stack>
+            {/* <ProgressIndicator label={this.state.labelname} description={this.state.description} percentComplete={this.state.Progress}></ProgressIndicator> */}
         </DialogContent>;
     }
 

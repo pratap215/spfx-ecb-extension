@@ -42,6 +42,7 @@ import { SPHttpClient, SPHttpClientResponse, SPHttpClientConfiguration } from '@
  * it will be deserialized into the BaseExtension.properties object.
  * You can define an interface to describe it.
  */
+import ProgressDialogContent from './../components/ProgressDialog';
 export interface ICustomEcbCommandSetProperties {
     targetUrl: string;
 }
@@ -50,6 +51,12 @@ const LOG_SOURCE: string = 'CustomEcbCommandSet';
 
 export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomEcbCommandSetProperties> {
 
+    constructor() {
+        super();
+        this._dialog = new ProgressDialogContent();
+        // Log.info(LOG_SOURCE, 'Initialized CustomEcbCommandSet');
+    }
+    private _dialog: ProgressDialogContent;
     private _multilingual: boolean;
     private _pageName: string | undefined;
     private _getUserPermissions: boolean | undefined;
@@ -89,13 +96,17 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         switch (event.itemId) {
             case 'ShowDetails':
                 console.log('onExecute start');
+                
+                this._dialog.show();
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
                 if (confirm('Are you sure you want to translate this page[' + this._pageName + ']')) {
-
+                    
+                    // ProgressDialogContent.show(dialog);
                     this._listId = this.context.pageContext.list.id.toString();
                     this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
 
                     this._onTranslate();
+                    // this._dialog.close();
                 }
                 break;
             default:
@@ -157,7 +168,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                         ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
                         : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
 
-                    Dialog.alert(`Starting Translation............ ` + languagecode);
+                    // Dialog.alert(`Starting Translation............ ` + languagecode);
 
                     await new Promise(resolve => setTimeout(resolve, 5000));
 
@@ -196,11 +207,12 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                         } catch (error) {
                             console.dir(error);
-
+                            this._dialog.close();
 
                         }
                     }).catch((error: Error) => {
                         console.dir(error);
+                        this._dialog.close();
 
                     });
 
@@ -209,9 +221,10 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
             } catch (err) {
                 console.dir('aynsc error');
                 console.log(err);
+                this._dialog.close();
 
             }
-
+            this._dialog.close();
         })();
 
 

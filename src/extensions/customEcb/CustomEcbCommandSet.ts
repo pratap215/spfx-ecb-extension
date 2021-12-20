@@ -484,7 +484,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         console.log('getPageMode :' + pageId);
         try {
             const restApi = `${this.context.pageContext.web.absoluteUrl}/_api/sitepages/pages(${pageId})/checkoutpage`;
-            const result = await this.context.spHttpClient.post(restApi, SPHttpClient.configurations.v1, {})
+            const result = await this.context.spHttpClient.post(restApi, SPHttpClient.configurations.v1, {});
 
             if (!result.ok) {
                 console.log('failed getPageMode');

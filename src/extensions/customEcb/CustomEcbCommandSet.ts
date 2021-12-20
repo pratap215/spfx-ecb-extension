@@ -143,10 +143,10 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     return;
                 }
 
-                const isSourcePageCheckedOut = await this.getPageMode(this._sourcePageId);
-                if (isSourcePageCheckedOut == false) {
-                    return;
-                }
+                //const isSourcePageCheckedOut = await this.getPageMode(this._sourcePageId);
+                //if (isSourcePageCheckedOut == false) {
+                //    return;
+                //}
 
                 console.log('Copying......... ');
                 // const sourceRelativePageUrl: string = '/SitePages/' + this._pageName;

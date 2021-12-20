@@ -63,11 +63,12 @@ export class ProgressDialogContent extends React.Component<IProgressDialogConten
 
     public render(): JSX.Element {
         return <DialogContent
-            title='Translation'
+            title='Translation is in progress'
+            subText={`Please do not close this browser window\n or use the back button`}
             showCloseButton={false}
         >
             <Stack tokens={stackTokens}>
-      <div>
+      <div style={{ marginLeft: '120px' }}>
         <Spinner label="Working on it..." />
       </div>
       </Stack>

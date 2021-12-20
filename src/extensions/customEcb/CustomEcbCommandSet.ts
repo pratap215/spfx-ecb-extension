@@ -99,7 +99,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 
                 this._dialog.show();
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
-                if (confirm('Are you sure you want to translate this page[' + this._pageName + ']')) {
+                if (confirm('You are abbout to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
                     
                     // ProgressDialogContent.show(dialog);
                     this._listId = this.context.pageContext.list.id.toString();
@@ -203,7 +203,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                             console.log('translation complete');
 
-                            Dialog.alert(`Translation Completed........`);
+                            Dialog.alert(`Translation finished. You can now continue editing.`);
 
                         } catch (error) {
                             console.dir(error);

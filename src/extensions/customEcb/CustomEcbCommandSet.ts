@@ -64,6 +64,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     private _listItemId: string | undefined;
     private _targetPageurl: string | undefined;
     private _sourcePageurl: string | undefined;
+    private _sourcePageId: string | undefined;
 
     private _sPTranslationSourceItemId: Guid | undefined;
     private _sPTranslationLanguage: string | undefined;
@@ -100,7 +101,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 this._dialog.show();
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
                 if (confirm('You are abbout to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
-                    
+
                     // ProgressDialogContent.show(dialog);
                     this._listId = this.context.pageContext.list.id.toString();
                     this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
@@ -121,6 +122,11 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         (async () => {
             try {
 
+                const isTranslatePageCheckedOut = await this.getPageMode(this._listItemId);
+                if (isTranslatePageCheckedOut == false) {
+                    return;
+                }
+
                 const isValidTargetFile = await this.getTranslationPageMetaData();
 
                 console.log(this._targetPageurl);
@@ -130,12 +136,15 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     return;
                 }
 
-
-
                 const isValidSourceFile = await this.getSourcePageMetaData(this._sPTranslationSourceItemId);
 
                 if (isValidSourceFile == false) {
                     Dialog.alert('Original page not exists.Contact Admin');
+                    return;
+                }
+
+                const isSourcePageCheckedOut = await this.getPageMode(this._sourcePageId);
+                if (isSourcePageCheckedOut == false) {
                     return;
                 }
 
@@ -201,7 +210,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                         targetpage.save(false);
 
-                            Dialog.alert(`Translation finished. You can now continue editing.`);
+                        Dialog.alert(`Translation finished. You can now continue editing.`);
 
                         // Dialog.alert(`Translation Completed........`);
 
@@ -454,6 +463,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     console.log(row);
                     this._sourcePageurl = row["FileRef"];
                     this._sPTranslatedLanguages = row["_SPTranslatedLanguages"];
+                    this._sourcePageId = row["ID"];
                     console.log(this._sPTranslatedLanguages);
                     return true;
                 }
@@ -466,6 +476,34 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         }
 
         return false;
+    }
+
+
+    public async getPageMode(pageId: string): Promise<boolean> {
+        console.log("");
+        console.log('getPageMode :' + pageId);
+        try {
+            const restApi = `${this.context.pageContext.web.absoluteUrl}/_api/sitepages/pages(${pageId})/checkoutpage`;
+            const result = await this.context.spHttpClient.post(restApi, SPHttpClient.configurations.v1, {})
+
+            if (!result.ok) {
+                console.log('failed getPageMode');
+                const resultData: any = await result.json();
+                console.log(resultData.error);
+                Dialog.alert(resultData.error.message);
+                return false;
+            }
+            else {
+                console.log("success getPageMode");
+                const data: any = await result.json();
+                console.log(data);
+                return true;
+            }
+        } catch (e) {
+            console.log('error getPageMode');
+            console.log(e);
+            return false;
+        }
     }
 
     private getLanguageName(code: string): string {

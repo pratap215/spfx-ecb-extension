@@ -96,7 +96,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         switch (event.itemId) {
             case 'ShowDetails':
                 console.log('onExecute start');
-                
+
                 this._dialog.show();
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
                 if (confirm('You are abbout to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
@@ -130,7 +130,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     return;
                 }
 
-               
+
 
                 const isValidSourceFile = await this.getSourcePageMetaData(this._sPTranslationSourceItemId);
 
@@ -160,7 +160,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     // const targetRelativePageUrl: string = '/SitePages/' + languagecode + '/' + this._pageName;
                     const targetRelativePageUrl: string = this._targetPageurl;
                     const targetpage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(targetRelativePageUrl));
-                    await sourcepage.copyTo(targetpage, true);
+                    await sourcepage.copyTo(targetpage, false);
 
                     console.log('Copy Completed.......');
 
@@ -172,49 +172,49 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                     await new Promise(resolve => setTimeout(resolve, 5000));
 
-                    sp.web.loadClientsidePage(targetRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
 
-                        try {
-                            console.log('translation started');
+                    //   sp.web.loadClientsidePage(targetRelativePageUrl).then(async (clientSidePage: IClientsidePage) => {
+                    try {
+                        console.log('translation started');
 
-                            var clientControls: ColumnControl<any>[] = [];
-                            clientSidePage.findControl((c) => {
-                                if (c instanceof ClientsideText) {
-                                    clientControls.push(c);
-                                }
-                                else if (c instanceof ClientsideWebpart) {
-                                    clientControls.push(c);
-                                }
-                                return false;
-                            });
+                        var clientControls: ColumnControl<any>[] = [];
+                        targetpage.findControl((c) => {
+                            if (c instanceof ClientsideText) {
+                                clientControls.push(c);
+                            }
+                            else if (c instanceof ClientsideWebpart) {
+                                clientControls.push(c);
+                            }
+                            return false;
+                        });
 
-                            await this._alltranslateClientSideControl(translationService, clientControls, languagecode);
+                        await this._alltranslateClientSideControl(translationService, clientControls, languagecode);
 
-                            //const nav = sp.web.navigation.topNavigationBar;
-                            //Dialog.alert(nav.length.toString());
-                            //const childrenData = await nav.getById(1).children();
-                            //await nav.getById(1).update({
-                            //    Title: "A new title",
-                            //});
+                        //const nav = sp.web.navigation.topNavigationBar;
+                        //Dialog.alert(nav.length.toString());
+                        //const childrenData = await nav.getById(1).children();
+                        //await nav.getById(1).update({
+                        //    Title: "A new title",
+                        //});
 
-                            //clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
+                        //clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
 
-                            clientSidePage.save();
-
-                            console.log('translation complete');
+                        targetpage.save(false);
 
                             Dialog.alert(`Translation finished. You can now continue editing.`);
 
-                        } catch (error) {
-                            console.dir(error);
-                            this._dialog.close();
+                        // Dialog.alert(`Translation Completed........`);
 
-                        }
-                    }).catch((error: Error) => {
+                    } catch (error) {
                         console.dir(error);
                         this._dialog.close();
 
-                    });
+                    }
+                    //}).catch((error: Error) => {
+                    //    console.dir(error);
+                    //    this._dialog.close();
+
+                    //});
 
                 }
 
@@ -307,12 +307,12 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     //Promise can be removed, however doesn't harm if used with async
     public getUsersPermissions = (): Promise<boolean> => {
         return new Promise<boolean>(async (resolve, reject) => {
-            try{
+            try {
                 let userHasPermissions: boolean = false;
-                userHasPermissions = this.context.pageContext.list.permissions.hasPermission(SPPermission.manageLists)
+                userHasPermissions = this.context.pageContext.list.permissions.hasPermission(SPPermission.manageLists);
                 return resolve(userHasPermissions);
             }
-            catch(error){
+            catch (error) {
                 console.log(error);
                 return reject(false);
             }
@@ -328,7 +328,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         try {
             const absoluteurl = this.context.pageContext.web.absoluteUrl;
             const siteurl = `${absoluteurl}/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
-          //  const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+            //  const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
             const result = await this.context.spHttpClient.post(siteurl, SPHttpClient.configurations.v1, {
                 body: JSON.stringify({
                     parameters: {
@@ -410,7 +410,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         //    console.log(r);
 
         try {
-           // const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
+            // const siteurl = `https://8p5g5n.sharepoint.com/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
             const absoluteurl = this.context.pageContext.web.absoluteUrl;
             const siteurl = `${absoluteurl}/_api/web/Lists/GetById('${this._listId}')/RenderListDataAsStream`;
 
@@ -468,7 +468,67 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         return false;
     }
 
+    private getLanguageName(code: string): string {
+        console.log("getLanguageName " + code);
+        const regionalLanguages = `{"ar-sa":"Arabic",
+"az-latn-az":"Azerbaijani",
+"eu-es":"Basque",
+"bs-latn-ba":"Bosnian (Latin)",
+"bg-bg":"Bulgarian",
+"ca-es":"Catalan",
+"zh-cn":"Chinese (Simplified)",
+"zh-tw":"Chinese (Traditional)",
+"hr-hr":"Croatian",
+"cs-cz":"Czech",
+"da-dk":"Danish",
+"prs-af":"Dari",
+"nl-nl":"Dutch",
+"en-us":"English",
+"et-ee":"Estonian",
+"fi-fi":"Finnish",
+"fr-fr":"French",
+"gl-es":"Galician",
+"de-de":"German",
+"el-gr":"Greek",
+"he-il":"Hebrew",
+"hi-in":"Hindi",
+"hu-hu":"Hungarian",
+"id-id":"Indonesian",
+"ga-ie":"Irish",
+"it-it":"Italian",
+"ja-jp":"Japanese",
+"kk-kz":"Kazakh",
+"ko-kr":"Korean",
+"lv-lv":"Latvian",
+"lt-lt":"Lithuanian",
+"mk-mk":"Macedonian",
+"ms-my":"Malay",
+"nb-no":"Norwegian (Bokm�l)",
+"pl-pl":"Polish",
+"pt-br":"Portuguese (Brazil)",
+"pt-pt":"Portuguese (Portugal)",
+"ro-ro":"Romanian",
+"ru-ru":"Russian",
+"sr-cyrl-rs":"Serbian (Cyrillic, Serbia)",
+"sr-latn-cs":"Serbian (Latin)",
+"sr-latn-rs":"Serbian (Latin, Serbia)",
+"sk-sk":"Slovak",
+"sl-si":"Slovenian",
+"es-es":"Spanish",
+"sv-se":"Swedish",
+"th-th":"Thai",
+"tr-tr":"Turkish",
+"uk-ua":"Ukrainian",
+"vi-vn":"Vietnamese",
+"cy-gb":"Welsh"}`;
 
+        const languageNames = JSON.parse(regionalLanguages);
+
+        console.log("getLanguageName name " + languageNames["de-de"]);
+
+        return languageNames[code.toLowerCase()];
+
+    }
     //Metadata end
 
 

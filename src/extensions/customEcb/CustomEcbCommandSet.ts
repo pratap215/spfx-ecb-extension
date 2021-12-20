@@ -222,7 +222,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 console.dir('aynsc error');
                 console.log(err);
                 this._dialog.close();
-
+                Dialog.alert(`Error in Translation ` + err);
             }
             this._dialog.close();
         })();

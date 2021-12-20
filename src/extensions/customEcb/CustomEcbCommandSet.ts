@@ -122,17 +122,17 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         (async () => {
             try {
 
-                const isTranslatePageCheckedOut = await this.getPageMode(this._listItemId);
-                if (isTranslatePageCheckedOut == false) {
-                    return;
-                }
-
                 const isValidTargetFile = await this.getTranslationPageMetaData();
 
                 console.log(this._targetPageurl);
 
                 if (isValidTargetFile == false) {
                     Dialog.alert('Page cannot be translated.Contact Admin');
+                    return;
+                }
+
+                const isTranslatePageCheckedOut = await this.getPageMode(this._listItemId);
+                if (isTranslatePageCheckedOut == false) {
                     return;
                 }
 

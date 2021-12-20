@@ -3,7 +3,7 @@ $AppCatalogURL = "https://dwpstage.sharepoint.com/sites/appcatalog"
 $AppFilePath_1 = "C:\Users\adminpen.arpula\spfxclientsideprojects\spfx-ecb-extension\sharepoint\solution\spfx-ecb-extension.sppkg"
 $AppFilePath_2 = "C:\Users\adminpen.arpula\spfxclientsideprojects\react-application-machine-translations\sharepoint\solution\machine-translation-extension.sppkg"
 
-$encpassword = convertto-securestring -String 'balaji@7hills' -AsPlainText -Force
+$encpassword = convertto-securestring -String 'password' -AsPlainText -Force
 $cred = new-object -typename System.Management.Automation.PSCredential -argumentlist 'Arpula.Lakshmi-Prasad-ext@dwpstage.onmicrosoft.com', $encpassword
 #Connect-PnPOnline -Url $AppCatalogURL -UseWebLogin 
 Connect-PnPOnline -Url $AppCatalogURL -Credentials $cred

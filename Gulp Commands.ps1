@@ -5,13 +5,15 @@ $AppName = "spfx-ecb-extension-client-side-solution"
 Connect-PnPOnline -Url $AppCatalogURL -UseWebLogin 
 
 $App = Get-PnPApp -Scope Tenant | Where {$_.Title -eq $AppName}
-
+if (-not ($App.Id -eq $null))
+{
 'Removing '  + $App.Id
  
 #Remove an App from App Catalog Site
 Remove-PnPApp -Identity $App.Id
 
 'Removed ############################################################################################'  
+}
 Write-Output "   "
 Write-Output "   "
 

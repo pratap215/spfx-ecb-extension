@@ -98,16 +98,20 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
             case 'ShowDetails':
                 console.log('onExecute start');
 
-                this._dialog.show();
+                
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
-                if (confirm('You are abbout to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
-
+                if (confirm('You are about to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
+                    
                     // ProgressDialogContent.show(dialog);
+                    this._dialog.show();
                     this._listId = this.context.pageContext.list.id.toString();
                     this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
 
-                    this._onTranslate();
+                    this._onTranslate(event.selectedRows[0]);
                     // this._dialog.close();
+                }
+                else{
+                    return;
                 }
                 break;
             default:
@@ -116,17 +120,48 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     }
 
 
-    private _onTranslate = (): void => {
+    private _onTranslate = (selectedRow: any): void => {
         console.log('_onTranslate start');
 
         (async () => {
             try {
+
+                //check if page is checked out by current user
+                const absoluteurl = this.context.pageContext.web.absoluteUrl;
+                const loggedInUser = this.context.pageContext.user.email;
+                const fileURL: string = selectedRow.getValueByName('FileRef').toString()
+                console.log('===============Target page URL=====================');
+                console.log(fileURL);
+                
+                console.log('====================================');
+                const result = await this.context.spHttpClient.get(absoluteurl + `/_api/web/GetFileByServerRelativeUrl('${fileURL}')/CheckedOutByUser`, SPHttpClient.configurations.v1, {})
+                .then((response: SPHttpClientResponse) => {  
+                    response.json().then((responseJSON: any) => {  
+                        console.log('=============responseJSON=======================');
+                        console.log(responseJSON);
+                        console.log('====================================');
+                        if(responseJSON.Email != undefined && loggedInUser != responseJSON.Email){
+                            console.log("Checkout user-------------------");
+                            this._dialog.close();
+                            
+                            // Dialog.alert("this is a sample dialog\r\n Next line in dialog");
+                            Dialog.alert('This page is checked out by: '+responseJSON.Title);
+                            return;
+                            
+                        }
+
+                    });  
+                  });  
+
+                //---------------------------------------------
+
 
                 const isValidTargetFile = await this.getTranslationPageMetaData();
 
                 console.log(this._targetPageurl);
 
                 if (isValidTargetFile == false) {
+                    this._dialog.close();
                     Dialog.alert('Page cannot be translated.Contact Admin');
                     return;
                 }
@@ -139,6 +174,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                 const isValidSourceFile = await this.getSourcePageMetaData(this._sPTranslationSourceItemId);
 
                 if (isValidSourceFile == false) {
+                    this._dialog.close();
                     Dialog.alert('Original page not exists.Contact Admin');
                     return;
                 }
@@ -156,8 +192,10 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     sourcepage = await ClientsidePageFromFile(sp.web.getFileByServerRelativeUrl(sourceRelativePageUrl));
                 } catch (error) {
                     console.dir(error);
+                    this._dialog.close();
                     console.log('source page not found ' + this._pageName);
                     Dialog.alert('Original page [' + this._pageName + '] not exists.Contact Admin');
+                    
                     return;
                 }
                 console.log('async/await source -> ', sourcepage);

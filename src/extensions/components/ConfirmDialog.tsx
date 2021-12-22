@@ -21,6 +21,7 @@ interface IProgressDialogContentProps {
     close: () => void;
     labelname: string;
     description: string;
+    submit: (labelname: string) => void;
 
 }
 
@@ -34,21 +35,7 @@ const stackTokens: IStackTokens = {
     maxWidth: 250,
   };
 export class ConfirmDialogContent extends React.Component<any, any>  {
-    public ceb: CustomEcbCommandSet;
-    // private _dialog: ProgressDialogContent;
-    private _confirmDialog: ConfirmDialog;
-    private _multilingual: boolean;
-    private _pageName: string | undefined;
-    private _getUserPermissions: boolean | undefined;
-    private _listId: string | undefined;
-    private _listItemId: string | undefined;
-    private _targetPageurl: string | undefined;
-    private _sourcePageurl: string | undefined;
-    private _sourcePageId: string | undefined;
-
-    private _sPTranslationSourceItemId: Guid | undefined;
-    private _sPTranslationLanguage: string | undefined;
-    private _sPTranslatedLanguages: Array<string> | undefined;
+    public labelName: string;
     constructor(props) {
         super(props);
         this.state = {
@@ -95,11 +82,12 @@ export class ConfirmDialogContent extends React.Component<any, any>  {
             <DialogFooter>
             <PrimaryButton onClick={() => {
                 //this.ceb._onTranslate()
+                this.props.submit("Yes");
 
             }}>Yes
             </PrimaryButton>
             <DefaultButton onClick={() => {
-        return Promise.resolve(true);            
+        this.props.submit("No");           
 
             }}>No
             </DefaultButton>
@@ -129,17 +117,26 @@ export default class ConfirmDialog extends BaseDialog {
         ReactDOM.render(<ConfirmDialogContent
             // DefaultProgress={this.initprogress}
             // close={this.close}
-            // labelname={this.labelname}
+            labelname={this.labelname}
+            submit={ this._submit }
             // description={this.description}
 
-        />,{
-            context: "context"
-        }, this.domElement);
+        />, this.domElement);
     }
 
     public getConfig(): IDialogConfiguration {
         return {
             isBlocking: true
         };
+    }
+    protected onAfterClose(): void {
+        super.onAfterClose();
+        
+        // Clean up the element for the next dialog
+        ReactDOM.unmountComponentAtNode(this.domElement);
+    }
+    private _submit = (labelName: string) => {
+        this.labelname = labelName;
+        this.close();
     }
 }

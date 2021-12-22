@@ -63,7 +63,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         this._dialog = new ProgressDialogContent();
         
         // this.ctx = this.context.pageContext;
-        // this._confirmDialog = new ConfirmDialog();
+        this._confirmDialog = new ConfirmDialog();
         // Log.info(LOG_SOURCE, 'Initialized CustomEcbCommandSet');
     }
     public ctx: PageContext;
@@ -143,13 +143,26 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                                 
                             }
                             else{
+                                this._confirmDialog.show().then(() => {
+                                    if(this._confirmDialog.labelname === "Yes"){
+                                        this._listId = this.context.pageContext.list.id.toString();
+                                        this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
+                                        this._dialog.show();
+                                        this._onTranslate();
+                                      }  
+                                      else{
+                                        return false;
+                                      }
+
+
+                                })
                                 // this.renderComponent(fileURL);
-                                if (confirm('You are about to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
-                                this._listId = this.context.pageContext.list.id.toString();
-                                this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
-                                this._dialog.show();
-                                this._onTranslate();
-                                }
+                                // if (confirm('You are about to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
+                                // this._listId = this.context.pageContext.list.id.toString();
+                                // this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
+                                // this._dialog.show();
+                                // this._onTranslate();
+                                // }
                             }
     
                         });  

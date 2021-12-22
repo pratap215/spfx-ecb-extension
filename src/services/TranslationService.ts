@@ -6,14 +6,14 @@ import { ITranslatorLanguage } from "../models/ITranslatorLanguage";
 import { IDetectedLanguage } from "../models/IDetectedLanguage";
 import { ITranslationResult } from "../models/ITranslationResult";
 import { IBreakSentenceResult } from "../models/IBreakSentenceResult";
-
+import { SPHttpClient } from '@microsoft/sp-http';
 export class TranslationService implements ITranslationService {
 
   private httpClient: HttpClient;
   private apiKey: string;
   private headers: Headers;
   private host: string;
-
+  private sphttpclient: SPHttpClient;
   constructor(httpClient: HttpClient, apiKey: string, regionSpecifier: string = "") {
     this.httpClient = httpClient;
     this.apiKey = apiKey;
@@ -22,7 +22,32 @@ export class TranslationService implements ITranslationService {
     this.headers.append("Content-type", "application/json");
     this.headers.append("Ocp-Apim-Subscription-Key", this.apiKey);
   }
+  public async getPageMode(restApi: string): Promise<string> {
+    console.log("");
+    console.log('getPageMode :' + restApi);
+    try {
+      //const restApi = `${this.context.pageContext.web.absoluteUrl}/_api/sitepages/pages(${pageId})/checkoutpage`;
+      const result = await this.sphttpclient.post(restApi, SPHttpClient.configurations.v1, {});
 
+      if (!result.ok) {
+        console.log('failed getPageMode');
+        const resultData: any = await result.json();
+        console.log(resultData.error);
+       // Dialog.alert(resultData.error.message);
+        return resultData.error.message;
+      }
+      else {
+        console.log("success getPageMode");
+        const data: any = await result.json();
+        console.log(data);
+        return "";
+      }
+    } catch (e) {
+      console.log('error getPageMode');
+      console.log(e);
+      return "";
+    }
+  }
   public async getAvailableLanguages(supportedLanguages: string[]): Promise<ILanguage[]> {
     const httpClient = this.httpClient;
     const path: string = "languages?api-version=3.0&scope=dictionary";

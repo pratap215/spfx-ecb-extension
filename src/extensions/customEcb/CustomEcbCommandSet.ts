@@ -43,20 +43,32 @@ import { SPHttpClient, SPHttpClientResponse, SPHttpClientConfiguration } from '@
  * You can define an interface to describe it.
  */
 import ProgressDialogContent from './../components/ProgressDialog';
+import ConfirmDialog from '../components/ConfirmDialog';
+import * as React from 'react';
+import * as ReactDOM from "react-dom";
+import { PageContext } from '@microsoft/sp-page-context'; // load page context declaration
+
 export interface ICustomEcbCommandSetProperties {
     targetUrl: string;
 }
 
 const LOG_SOURCE: string = 'CustomEcbCommandSet';
 
+
 export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomEcbCommandSetProperties> {
+    [x: string]: any;
 
     constructor() {
         super();
         this._dialog = new ProgressDialogContent();
+        
+        // this.ctx = this.context.pageContext;
+        // this._confirmDialog = new ConfirmDialog();
         // Log.info(LOG_SOURCE, 'Initialized CustomEcbCommandSet');
     }
+    public ctx: PageContext;
     private _dialog: ProgressDialogContent;
+    private _confirmDialog: ConfirmDialog;
     private _multilingual: boolean;
     private _pageName: string | undefined;
     private _getUserPermissions: boolean | undefined;
@@ -91,69 +103,118 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
             }
         }
     }
+    public _showDialog() {
+
+    }
 
     @override
-    public onExecute(event: IListViewCommandSetExecuteEventParameters): void {
+    public async onExecute(event: IListViewCommandSetExecuteEventParameters): Promise<void> {
         switch (event.itemId) {
             case 'ShowDetails':
                 console.log('onExecute start');
 
                 
                 this._pageName = event.selectedRows[0].getValueByName('FileLeafRef');
-                if (confirm('You are about to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
+                
+                //if (confirm('You are about to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
                     
                     // ProgressDialogContent.show(dialog);
-                    this._dialog.show();
-                    this._listId = this.context.pageContext.list.id.toString();
-                    this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
+                    //this._dialog.show();
 
-                    this._onTranslate(event.selectedRows[0]);
+
+
+                    const absoluteurl = this.context.pageContext.web.absoluteUrl;
+                    const loggedInUser = this.context.pageContext.user.email;
+                    const fileURL: string = event.selectedRows[0].getValueByName('FileRef').toString()
+                    console.log('===============Target page URL=====================');
+                    console.log(fileURL);
+                    
+                    console.log('====================================');
+                    const result = await this.context.spHttpClient.get(absoluteurl + `/_api/web/GetFileByServerRelativeUrl('${fileURL}')/CheckedOutByUser`, SPHttpClient.configurations.v1, {})
+                    .then(async (response: SPHttpClientResponse) => {  
+                        await response.json().then((responseJSON: any) => {  
+                            if(responseJSON.Email != undefined && loggedInUser != responseJSON.Email){
+                                console.log("Checkout user-------------------");
+                                // this._dialog.close();
+                                
+                                // Dialog.alert("this is a sample dialog\r\n Next line in dialog");
+                                Dialog.alert(responseJSON.Title+ ' is currently editing the page. Please try again later');
+                                return false;
+                                
+                            }
+                            else{
+                                // this.renderComponent(fileURL);
+                                if (confirm('You are about to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
+                                this._listId = this.context.pageContext.list.id.toString();
+                                this._listItemId = event.selectedRows[0].getValueByName('ID').toString();
+                                this._dialog.show();
+                                this._onTranslate();
+                                }
+                            }
+    
+                        });  
+                      });  
+    
+                    //---------------------------------------------
+
+
+
+
+
                     // this._dialog.close();
-                }
-                else{
-                    return;
-                }
+                //}
+                // else{
+                //     return;
+                // }
                 break;
             default:
                 throw new Error('Unknown command');
         }
     }
 
+    // private renderComponent(props: any) {
+    //     const elem: React.ReactElement<any> = React.createElement(NComp, props);
+    //     ReactDOM.render(elem, this.domElement);
 
-    private _onTranslate = (selectedRow: any): void => {
+    //   }
+    public _onTranslate = async ()  => {
         console.log('_onTranslate start');
 
         (async () => {
             try {
 
                 //check if page is checked out by current user
-                const absoluteurl = this.context.pageContext.web.absoluteUrl;
-                const loggedInUser = this.context.pageContext.user.email;
-                const fileURL: string = selectedRow.getValueByName('FileRef').toString()
-                console.log('===============Target page URL=====================');
-                console.log(fileURL);
+                // const isTranslatePageCheckedOut = await this.getPageMode(this._listItemId);
+                // if (isTranslatePageCheckedOut == false) {
+                //     return;
+                // }
+                // const absoluteurl = this.context.pageContext.web.absoluteUrl;
+                // const loggedInUser = this.context.pageContext.user.email;
+                // const fileURL: string = selectedRow.getValueByName('FileRef').toString()
+                // console.log('===============Target page URL=====================');
+                // console.log(fileURL);
                 
-                console.log('====================================');
-                const result = await this.context.spHttpClient.get(absoluteurl + `/_api/web/GetFileByServerRelativeUrl('${fileURL}')/CheckedOutByUser`, SPHttpClient.configurations.v1, {})
-                .then((response: SPHttpClientResponse) => {  
-                    response.json().then((responseJSON: any) => {  
-                        console.log('=============responseJSON=======================');
-                        console.log(responseJSON);
-                        console.log('====================================');
-                        if(responseJSON.Email != undefined && loggedInUser != responseJSON.Email){
-                            console.log("Checkout user-------------------");
-                            this._dialog.close();
+                // console.log('====================================');
+                // const result = await this.context.spHttpClient.get(absoluteurl + `/_api/web/GetFileByServerRelativeUrl('${fileURL}')/CheckedOutByUser`, SPHttpClient.configurations.v1, {})
+                // .then(async (response: SPHttpClientResponse) => {  
+                //     await response.json().then((responseJSON: any) => {  
+                //         console.log('=============responseJSON=======================');
+                //         console.log(responseJSON);
+                //         console.log('====================================');
+                //         if(responseJSON.Email != undefined && loggedInUser != responseJSON.Email){
+                //             console.log("Checkout user-------------------");
+                //             this._dialog.close();
                             
-                            // Dialog.alert("this is a sample dialog\r\n Next line in dialog");
-                            Dialog.alert('This page is checked out by: '+responseJSON.Title);
-                            return;
+                //             // Dialog.alert("this is a sample dialog\r\n Next line in dialog");
+                //             Dialog.alert('This page is checked out by: '+responseJSON.Title);
+                //             return;
                             
-                        }
+                //         }
 
-                    });  
-                  });  
+                //     });  
+                //   });  
 
-                //---------------------------------------------
+                // //---------------------------------------------
 
 
                 const isValidTargetFile = await this.getTranslationPageMetaData();
@@ -166,10 +227,10 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     return;
                 }
 
-                const isTranslatePageCheckedOut = await this.getPageMode(this._listItemId);
-                if (isTranslatePageCheckedOut == false) {
-                    return;
-                }
+                // const isTranslatePageCheckedOut = await this.getPageMode(this._listItemId);
+                // if (isTranslatePageCheckedOut == false) {
+                //     return;
+                // }
 
                 const isValidSourceFile = await this.getSourcePageMetaData(this._sPTranslationSourceItemId);
 
@@ -515,34 +576,56 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
         return false;
     }
-
-
     public async getPageMode(pageId: string): Promise<boolean> {
+        let translationService: TranslationService
         console.log("");
-        console.log('getPageMode :' + pageId);
+        console.log('tsx getPageMode :' + pageId);
         try {
-            const restApi = `${this.context.pageContext.web.absoluteUrl}/_api/sitepages/pages(${pageId})/checkoutpage`;
-            const result = await this.context.spHttpClient.post(restApi, SPHttpClient.configurations.v1, {});
-
-            if (!result.ok) {
-                console.log('failed getPageMode');
-                const resultData: any = await result.json();
-                console.log(resultData.error);
-                Dialog.alert(resultData.error.message);
-                return false;
-            }
-            else {
-                console.log("success getPageMode");
-                const data: any = await result.json();
-                console.log(data);
-                return true;
-            }
-        } catch (e) {
-            console.log('error getPageMode');
-            console.log(e);
+          const absoluteurl = this.context.pageContext.web.absoluteUrl;
+          const restApi = `${absoluteurl}/_api/sitepages/pages(${pageId})/checkoutpage`;
+    
+          const result = await translationService.getPageMode(restApi);
+    
+          if (result) {
+            Dialog.alert(result);
             return false;
+          }
+          else {
+            return true;
+          }
+        } catch (e) {
+          console.log('error tsx getPageMode');
+          console.log(e);
+          return false;
         }
-    }
+      }
+
+    // public async getPageMode(pageId: string): Promise<boolean> {
+    //     console.log("");
+    //     console.log('getPageMode :' + pageId);
+    //     try {
+    //         const restApi = `${this.context.pageContext.web.absoluteUrl}/_api/sitepages/pages(${pageId})/checkoutpage`;
+    //         const result = await this.context.spHttpClient.post(restApi, SPHttpClient.configurations.v1, {});
+
+    //         if (!result.ok) {
+    //             console.log('failed getPageMode');
+    //             const resultData: any = await result.json();
+    //             console.log(resultData.error);
+    //             Dialog.alert(resultData.error.message);
+    //             return false;
+    //         }
+    //         else {
+    //             console.log("success getPageMode");
+    //             const data: any = await result.json();
+    //             console.log(data);
+    //             return true;
+    //         }
+    //     } catch (e) {
+    //         console.log('error getPageMode');
+    //         console.log(e);
+    //         return false;
+    //     }
+    // }
 
     private getLanguageName(code: string): string {
         console.log("getLanguageName " + code);
@@ -612,5 +695,12 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
 export interface cTypedHash<T> {
     [key: string]: T;
+}
+
+function MyComp(MyComp: any, arg1: {
+    //   description: this.properties.description,
+    ctx: import("@microsoft/sp-listview-extensibility").ListViewCommandSetContext;
+}): React.ReactElement<any, string | React.JSXElementConstructor<any>> {
+    throw new Error('Function not implemented.');
 }
 

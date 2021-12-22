@@ -24,7 +24,7 @@ const stackTokens: IStackTokens = {
     childrenGap: 20,
     maxWidth: 250,
   };
-export class ProgressDialogContent extends React.Component<IProgressDialogContentProps, IProgressDialogContentState> {
+export class ConfirmDialogContent extends React.Component<IProgressDialogContentProps, IProgressDialogContentState> {
 
     constructor(props: IProgressDialogContentProps) {
         super(props);
@@ -78,7 +78,7 @@ export class ProgressDialogContent extends React.Component<IProgressDialogConten
 
 }
 
-export default class ProgressDialogDialog extends BaseDialog {
+export default class ConfirmDialog extends BaseDialog {
     public initprogress: number;
     public labelname: string;
     public description: string;
@@ -88,7 +88,7 @@ export default class ProgressDialogDialog extends BaseDialog {
     }
 
     public render(): void {
-        ReactDOM.render(<ProgressDialogContent
+        ReactDOM.render(<ConfirmDialogContent
             DefaultProgress={this.initprogress}
             close={this.close}
             labelname={this.labelname}

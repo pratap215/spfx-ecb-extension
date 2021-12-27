@@ -34,6 +34,11 @@ const stackTokens: IStackTokens = {
     childrenGap: 20,
     maxWidth: 250,
   };
+  const dStyle = {
+    subText: {
+      fontSize: '18px'
+    }
+  }
 export class ConfirmDialogContent extends React.Component<any, any>  {
     public labelName: string;
     constructor(props) {
@@ -77,7 +82,7 @@ export class ConfirmDialogContent extends React.Component<any, any>  {
                 subText={`You are about to overwrite the content on this page with \nan automatic translation of the original language. Please confirm`}
                 showCloseButton={false}
                 isMultiline={true}
-
+                styles={dStyle}
             >
             <DialogFooter>
             <PrimaryButton onClick={() => {

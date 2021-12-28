@@ -310,7 +310,10 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                         });
 
                         await this._alltranslateClientSideControl(translationService, clientControls, languagecode);
-
+                        await this._getTranslatedTitle(translationService, sourcepage.title, languagecode, false)
+                        .then(text => {
+                          if(text) targetpage.title = text
+                        })
                         //const nav = sp.web.navigation.topNavigationBar;
                         //Dialog.alert(nav.length.toString());
                         //const childrenData = await nav.getById(1).children();
@@ -350,7 +353,17 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
 
     }
-
+    private _getTranslatedTitle = async(translationService: ITranslationService, title: string, languagecode: string, asHtml: boolean): Promise<string> => {
+        let titleTranslate: string = '';
+        try{
+      let te = await translationService.translate(title, languagecode, false);
+      titleTranslate = te.translations[0].text;
+      return Promise.resolve(titleTranslate);
+      }catch(err){
+        return Promise.resolve('');
+      }
+       
+      }
     private _alltranslateClientSideControl = async (translationService: ITranslationService, clientsideControls: ColumnControl<any>[], languagecode: string): Promise<void> => {
         try {
             for (const c of clientsideControls) {

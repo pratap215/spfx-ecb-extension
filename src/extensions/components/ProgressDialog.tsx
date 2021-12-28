@@ -24,6 +24,11 @@ const stackTokens: IStackTokens = {
     childrenGap: 20,
     maxWidth: 250,
   };
+  const dStyle = {
+    subText: {
+      fontSize: '18px'
+    }
+  }
 export class ConfirmDialogContent extends React.Component<IProgressDialogContentProps, IProgressDialogContentState> {
 
     constructor(props: IProgressDialogContentProps) {
@@ -66,6 +71,7 @@ export class ConfirmDialogContent extends React.Component<IProgressDialogContent
             title='Translation is in progress'
             subText={`Please do not close this browser window\n or use the back button`}
             showCloseButton={false}
+            styles={dStyle}
         >
             <Stack tokens={stackTokens}>
       <div style={{ marginLeft: '120px' }}>

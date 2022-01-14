@@ -47,6 +47,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import * as React from 'react';
 import * as ReactDOM from "react-dom";
 import { PageContext } from '@microsoft/sp-page-context'; // load page context declaration
+import { CheckinType } from '@pnp/sp/files/types';
 
 export interface ICustomEcbCommandSetProperties {
     targetUrl: string;
@@ -77,7 +78,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     private _targetPageurl: string | undefined;
     private _sourcePageurl: string | undefined;
     private _sourcePageId: string | undefined;
-
+    private _fileURL: string;
     private _sPTranslationSourceItemId: Guid | undefined;
     private _sPTranslationLanguage: string | undefined;
     private _sPTranslatedLanguages: Array<string> | undefined;
@@ -126,6 +127,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     const absoluteurl = this.context.pageContext.web.absoluteUrl;
                     const loggedInUser = this.context.pageContext.user.email;
                     const fileURL: string = event.selectedRows[0].getValueByName('FileRef').toString()
+                    this._fileURL = fileURL;
                     console.log('===============Target page URL=====================');
                     console.log(fileURL);
                     
@@ -288,7 +290,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                     const translationService: ITranslationService = environment.config.regionSpecifier
                         ? new TranslationService(this.context.httpClient, environment.config.translatorApiKey, `-${environment.config.regionSpecifier}`)
                         : new TranslationService(this.context.httpClient, environment.config.translatorApiKey);
-
+                    
                     // Dialog.alert(`Starting Translation............ ` + languagecode);
 
                     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -322,8 +324,29 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                         //});
 
                         //clientSidePage.title = this._getTranslatedText(clientSidePage.title, languagecode, false);
-
+                        
+                        // await sp.web.getFileByServerRelativeUrl(targetRelativePageUrl)
+                        //targetpage.save(false);
+                        
                         targetpage.save(false);
+                        //await sp.web.getFileByServerRelativeUrl(targetRelativePageUrl).checkout();
+                        //await sp.web.getFileByServerRelativeUrl(targetRelativePageUrl).checkin("Test Comment");
+                        //targetpage.save(true);
+                        //await sp.web.getFileByServerRelativeUrl("/SitePages/de/Sample.aspx").checkin("checked in translation");
+                        const result = await this.context.spHttpClient.get(this.context.pageContext.web.absoluteUrl + `/_api/web/GetFileByServerRelativeUrl('${this._fileURL}')/CheckedOutByUser`, SPHttpClient.configurations.v1, {})
+                    .then(async (response: SPHttpClientResponse) => {  
+                        await response.json().then(async (responseJSON: any) => {  
+                            console.log('===========response=========================');
+                            console.log(responseJSON);
+                            console.log('====================================');
+                            if(responseJSON.Email != undefined && this.context.pageContext.user.email === responseJSON.Email){
+                                await sp.web.getFileByServerRelativeUrl(`${this._fileURL}`).checkin("Automated Translation");
+                            }
+                            
+                        })
+
+                    })
+                    
 
                         Dialog.alert(`Translation finished. You can now continue editing.`);
 

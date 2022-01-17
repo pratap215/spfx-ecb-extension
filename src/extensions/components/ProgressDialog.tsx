@@ -28,7 +28,7 @@ const stackTokens: IStackTokens = {
     subText: {
       fontSize: '18px'
     }
-  }
+  };
 export class ConfirmDialogContent extends React.Component<IProgressDialogContentProps, IProgressDialogContentState> {
 
     constructor(props: IProgressDialogContentProps) {

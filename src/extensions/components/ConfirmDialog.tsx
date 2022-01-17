@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 import { BaseDialog, IDialogConfiguration } from '@microsoft/sp-dialog';
 import { ProgressIndicator } from 'office-ui-fabric-react/lib/ProgressIndicator';
 import { DefaultButton, DialogContent, DialogFooter, DialogType, IStackTokens, Label, PrimaryButton, Spinner, Stack } from 'office-ui-fabric-react';
-import { Dialog as D1 } from 'office-ui-fabric-react'
+import { Dialog as D1 } from 'office-ui-fabric-react';
 // import { Spinner } from '@fluentui/react/lib/Spinner';
 import CustomEcbCommandSet from '../customEcb/CustomEcbCommandSet';
 
@@ -38,7 +38,7 @@ const stackTokens: IStackTokens = {
     subText: {
       fontSize: '18px'
     }
-  }
+  };
 export class ConfirmDialogContent extends React.Component<any, any>  {
     public labelName: string;
     constructor(props) {
@@ -103,7 +103,7 @@ export class ConfirmDialogContent extends React.Component<any, any>  {
             null
 
 
-        )
+        );
     }
 
 }

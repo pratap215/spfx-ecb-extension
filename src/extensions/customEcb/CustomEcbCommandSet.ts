@@ -95,11 +95,15 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
     public async onListViewUpdated(event: IListViewCommandSetListViewUpdatedParameters): Promise<void> {
         const compareOneCommand: Command = this.tryGetCommand('ShowDetails');
         const validPage = (pageName): boolean => {
-            return pageName.slice(10, pageName.lastIndexOf('/')).length > 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
+            return pageName.slice(pageName.indexOf('/SitePages') + '/SitePages'.length + 1, pageName.lastIndexOf('/')).length > 0 && pageName.indexOf('.aspx') !== -1 ? true : false;
         };
         if (compareOneCommand) {
             if (event.selectedRows.length === 1) {
+                                
                 const pageName: string = event.selectedRows[0].getValueByName("FileRef");
+                console.log('=============pageName=======================');
+                console.log(pageName);
+                console.log('==============pageName======================');
                 compareOneCommand.visible = this._getUserPermissions && validPage(pageName) && this._multilingual && event.selectedRows.length === 1;
             }
         }
@@ -126,7 +130,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                     const absoluteurl = this.context.pageContext.web.absoluteUrl;
                     const loggedInUser = this.context.pageContext.user.email;
-                    const fileURL: string = event.selectedRows[0].getValueByName('FileRef').toString()
+                    const fileURL: string = event.selectedRows[0].getValueByName('FileRef').toString();
                     this._fileURL = fileURL;
                     console.log('===============Target page URL=====================');
                     console.log(fileURL);
@@ -157,7 +161,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                                       }
 
 
-                                })
+                                });
                                 // this.renderComponent(fileURL);
                                 // if (confirm('You are about to overwrite the content on this page with an automatic translation of the original language. Please confirm')) {
                                 // this._listId = this.context.pageContext.list.id.toString();
@@ -302,11 +306,86 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
 
                         var clientControls: ColumnControl<any>[] = [];
                         targetpage.findControl((c) => {
+                            console.log("------Webpartdata-----------");
+                            //console.log(c.data.webPartData.title);
                             if (c instanceof ClientsideText) {
                                 clientControls.push(c);
                             }
                             else if (c instanceof ClientsideWebpart) {
                                 clientControls.push(c);
+                            }
+                            if (c.data?.webPartData?.title === "Image") {
+                                console.log("-------------Image webpart found--------------");
+                                
+                                //c.data.webPartData.properties.overlayText = "custom sample";
+                                console.log("---starting----");
+                                const olText = async () => {
+                                    console.log("---started----");
+                                    await this._getTranslatedTitle(translationService, c.data.webPartData.properties.overlayText, languagecode, false)
+                                    .then(text => {
+                                      if(text) c.data.webPartData.properties.overlayText = text;
+                                      console.log("---overlay text converted----");
+                                      
+                                    });
+                                  };
+                                //clientControls.push(c);
+                                olText();
+                            }
+                            if (c.data?.webPartData?.title === "Quick chart") {
+                                console.log("-------------chart webpart found--------------");
+                                
+                                //c.data.webPartData.properties.overlayText = "custom sample";
+
+
+
+                                console.log("---starting chart----");
+                                const olChartText = async () => {
+                                    console.log("---started chart----");
+                                    c.data.webPartData.properties.data.map(async (item) => {
+                                        await this._getTranslatedTitle(translationService, item.label, languagecode, false)
+                                        .then(text => {
+                                          if(text) item.label = text;
+                                          console.log("---chart label converted----");
+                                          
+                                        });
+                                    });
+
+                                    // Translating labels
+                                    await this._getTranslatedTitle(translationService, c.data.webPartData.properties.xAxisLabel, languagecode, false)
+                                    .then(text => {
+                                      if(text) c.data.webPartData.properties.xAxisLabel = text;
+                                     
+                                    });
+                                    await this._getTranslatedTitle(translationService, c.data.webPartData.properties.yAxisLabel, languagecode, false)
+                                    .then(text => {
+                                      if(text) c.data.webPartData.properties.yAxisLabel = text;
+                                     
+                                    });
+
+
+                                  };
+                                //clientControls.push(c);
+                                olChartText();
+                            }
+                            if (c.data?.zoneGroupMetadata?.displayName) {
+                                const sectionText = async () => {
+                                    await this._getTranslatedTitle(translationService, c.data.zoneGroupMetadata.displayName, languagecode, false)
+                                    .then(text => {
+                                      if(text) c.data.zoneGroupMetadata.displayName = text;
+                                     
+                                    });
+                                };
+                                sectionText();
+                            }
+                            if (c.data?.webPartData?.title === "Organization chart") {
+                                const orgChartText = async () => {
+                                    await this._getTranslatedTitle(translationService, c.data.webPartData.properties.title, languagecode, false)
+                                    .then(text => {
+                                      if(text) c.data.webPartData.properties.title = text;
+                                     
+                                    });
+                                };
+                                orgChartText();
                             }
                             return false;
                         });
@@ -314,8 +393,8 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                         await this._alltranslateClientSideControl(translationService, clientControls, languagecode);
                         await this._getTranslatedTitle(translationService, sourcepage.title, languagecode, false)
                         .then(text => {
-                          if(text) targetpage.title = text
-                        })
+                          if(text) targetpage.title = text;
+                        });
                         //const nav = sp.web.navigation.topNavigationBar;
                         //Dialog.alert(nav.length.toString());
                         //const childrenData = await nav.getById(1).children();
@@ -343,9 +422,9 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
                                 await sp.web.getFileByServerRelativeUrl(`${this._fileURL}`).checkin("Automated Translation");
                             }
                             
-                        })
+                        });
 
-                    })
+                    });
                     
 
                         Dialog.alert(`Translation finished. You can now continue editing.`);
@@ -626,7 +705,7 @@ export default class CustomEcbCommandSet extends BaseListViewCommandSet<ICustomE
         return false;
     }
     public async getPageMode(pageId: string): Promise<boolean> {
-        let translationService: TranslationService
+        let translationService: TranslationService;
         console.log("");
         console.log('tsx getPageMode :' + pageId);
         try {
@@ -746,7 +825,7 @@ export interface cTypedHash<T> {
     [key: string]: T;
 }
 
-function MyComp(MyComp: any, arg1: {
+function MyComp33(MyComp: any, arg1: {
     //   description: this.properties.description,
     ctx: import("@microsoft/sp-listview-extensibility").ListViewCommandSetContext;
 }): React.ReactElement<any, string | React.JSXElementConstructor<any>> {

@@ -4,7 +4,7 @@
   "https": true,
   "serveConfigurations": {
     "default": {
-      "pageUrl": "https://8p5g5n.sharepoint.com/SitePages/Forms/ByAuthor.aspx",
+      "pageUrl": "https://8p5g5n.sharepoint.com/SitePages/Forms/ByAuthor.aspx",  
       "customActions": {
         "fb8c8a4d-517a-432a-b301-ccc4183507c9": {
           "location": "ClientSideExtension.ListViewCommandSet.ContextMenu",
